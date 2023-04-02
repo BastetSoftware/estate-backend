@@ -3,7 +3,6 @@ WORKDIR /app
 
 COPY *.go ./
 COPY go.mod ./
-COPY frontend/* ./frontend/
 RUN go mod download
 
 RUN go build -o /estate
