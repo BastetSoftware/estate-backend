@@ -49,11 +49,10 @@ create table tags
     foreign key (author) references users (id)
 );
 
-create table documents
+create table attachments
 (
     id     int auto_increment primary key,
-    name   text not null,
-    file   text not null,
+    title  text not null,
     object int  not null,
     author int  not null,
     
