@@ -32,7 +32,7 @@ create table users
     password   varchar(256) not null,
     first_name varchar(256) not null,
     last_name  varchar(256) not null,
-    patronymic int          null,
+    patronymic varchar(256) null,
     role       int          not null,
     
     foreign key (role) references roles (id)
