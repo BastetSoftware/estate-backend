@@ -21,6 +21,7 @@ create table tasks
     description text         not null,
     deadline    datetime     null,
     status      varchar(256) null,
+    
     foreign key (object) references objects (id)
 );
 
@@ -33,7 +34,19 @@ create table users
     last_name  varchar(256) not null,
     patronymic int          null,
     role       int          not null,
+    
     foreign key (role) references roles (id)
+);
+
+create table tags
+(
+    id     int          auto_increment primary key,
+    name   varchar(256) not null,
+    task   int          not null,
+    author int          not null,
+    
+    foreign key (task) references tasks (id),
+    foreign key (author) references users (id)
 );
 
 create table documents
@@ -43,6 +56,7 @@ create table documents
     file   text not null,
     object int  not null,
     author int  not null,
+    
     foreign key (object) references objects (id),
     foreign key (author) references users (id)
 );
