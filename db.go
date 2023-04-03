@@ -7,6 +7,8 @@ import (
 
 	"database/sql"
 	"github.com/go-sql-driver/mysql"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -16,7 +18,7 @@ const (
 type UserInfo struct {
 	Id         int64
 	Login      string
-	Pass       string
+	PassHash   []byte
 	FirstName  string
 	LastName   string
 	Patronymic *string
@@ -33,7 +35,7 @@ func (u UserInfo) Format() string {
 	return fmt.Sprint(
 		u.Id, " ",
 		u.Login, " ",
-		u.Pass, " ",
+		u.PassHash, " ",
 		u.FirstName, " ",
 		u.LastName, " ",
 		patronymic, " ",
@@ -49,8 +51,8 @@ func (u UserInfo) Register(db *sql.DB) error {
 
 func registerUser(db *sql.DB, u *UserInfo) (int64, error) {
 	result, err := db.Exec(
-		"INSERT INTO users (login, password, first_name, last_name, patronymic, role) VALUES (?,?,?,?,?,?)",
-		u.Login, u.Pass, u.FirstName, u.LastName, u.Patronymic, u.Role,
+		"INSERT INTO users (login, pass_hash, first_name, last_name, patronymic, role) VALUES (?,?,?,?,?,?)",
+		u.Login, u.PassHash, u.FirstName, u.LastName, u.Patronymic, u.Role,
 	)
 	if err != nil {
 		return 0, err
@@ -71,7 +73,7 @@ func getUserInfo(db *sql.DB, id int64) (*UserInfo, error) {
 	if err := row.Scan(
 		&user.Id,
 		&user.Login,
-		&user.Pass,
+		&user.PassHash,
 		&user.FirstName,
 		&user.LastName,
 		&user.Patronymic,
@@ -94,7 +96,7 @@ func findUserInfo(db *sql.DB, login string) (*UserInfo, error) {
 	if err := row.Scan(
 		&user.Id,
 		&user.Login,
-		&user.Pass,
+		&user.PassHash,
 		&user.FirstName,
 		&user.LastName,
 		&user.Patronymic,
@@ -122,8 +124,9 @@ func openSession(db *sql.DB, login string, pass string) (*Session, error) {
 		return nil, err
 	}
 
-	if user.Pass != pass {
-		return nil, fmt.Errorf("wrong password")
+	err = bcrypt.CompareHashAndPassword(user.PassHash, []byte(pass))
+	if err != nil {
+		return nil, fmt.Errorf("incorrect password")
 	}
 
 	var session = Session{

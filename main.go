@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
 
@@ -22,10 +23,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	pass, err := bcrypt.GenerateFromPassword([]byte("12345678"), bcrypt.DefaultCost)
+	if err != nil {
+		log.Fatal(err)
+	}
 	admin := UserInfo{
 		Id:         0,
 		Login:      "admin",
-		Pass:       "12345678",
+		PassHash:   pass,
 		FirstName:  "Admin",
 		LastName:   "McServer",
 		Patronymic: nil,

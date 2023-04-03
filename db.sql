@@ -29,7 +29,7 @@ create table users
 (
     id         int auto_increment primary key,
     login      varchar(256) not null unique,
-    pass_hash  varchar(256) not null,
+    pass_hash  binary(60)   not null,
     first_name varchar(256) not null,
     last_name  varchar(256) not null,
     patronymic varchar(256) null,
