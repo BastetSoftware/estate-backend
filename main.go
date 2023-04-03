@@ -4,7 +4,11 @@ import (
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"log"
+	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"database/sql"
 	"github.com/go-sql-driver/mysql"
@@ -21,6 +25,45 @@ func main() {
 	db, err = dbOpen()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	socket, err := net.Listen("unix", "/tmp/estate.sock")
+	if err != nil {
+		log.Fatalf("Unable to create a socket: %v", err)
+	}
+
+	channel := make(chan os.Signal, 1)
+	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-channel
+		err := os.Remove("/run/estate.sock")
+		if err != nil {
+			log.Fatalf("Unable to remove the socket: %v", err)
+		}
+
+		os.Exit(1)
+	}()
+
+	for {
+		conn, err := socket.Accept()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		go func(conn net.Conn) {
+			defer conn.Close()
+
+			buf := make([]byte, 4096)
+			n, err := conn.Read(buf)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			_, err = conn.Write(buf[:n])
+			if err != nil {
+				log.Fatal(err)
+			}
+		}(conn)
 	}
 
 	pass, err := bcrypt.GenerateFromPassword([]byte("12345678"), bcrypt.DefaultCost)
