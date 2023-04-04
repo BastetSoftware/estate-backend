@@ -24,7 +24,7 @@ func CustomUnmarshal(data []byte, v interface{}) error {
 	dec := msgpack.GetDecoder()
 
 	dec.Reset(bytes.NewReader(data))
-	dec.DisallowUnknownFields(true)
+	dec.DisallowUnknownFields(true) // <- this is customized
 	err := dec.Decode(v)
 
 	msgpack.PutDecoder(dec)
@@ -84,11 +84,7 @@ var apiFHandlers = [...]func(request *api.Request) (*api.Response, error){
 
 func handleRequest(conn net.Conn, r *api.Request) (*api.Response, error) {
 	if int(r.Func) >= len(apiFHandlers) {
-		response := api.Response{
-			Code: 255,
-			Data: nil,
-		}
-		return &response, nil
+		return &api.Response{Code: api.ENoFun, Data: nil}, nil
 	}
 
 	return apiFHandlers[r.Func](r)
