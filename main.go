@@ -1,19 +1,15 @@
 package main
 
 import (
+	"BastetSoftware/backend/api"
 	"BastetSoftware/backend/database"
+	"database/sql"
 	"fmt"
-	"github.com/vmihailenco/msgpack/v5"
+	"github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-
-	"database/sql"
-	"github.com/go-sql-driver/mysql"
 )
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
@@ -27,55 +23,6 @@ func main() {
 	db, err = database.OpenDB()
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	socket, err := net.Listen("unix", "/tmp/estate.sock")
-	if err != nil {
-		log.Fatalf("Unable to create a socket: %v", err)
-	}
-
-	channel := make(chan os.Signal, 1)
-	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-channel
-		err := os.Remove("/tmp/estate.sock")
-		if err != nil {
-			log.Fatalf("Unable to remove the socket: %v", err)
-		}
-
-		os.Exit(1)
-	}()
-
-	for {
-		conn, err := socket.Accept()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		go func(conn net.Conn) {
-			defer conn.Close()
-
-			buf := make([]byte, 4096)
-			n, err := conn.Read(buf)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			var msg struct {
-				Type int32
-				Data string
-			}
-			err = msgpack.Unmarshal(buf[:n], &msg)
-			if err != nil {
-				log.Fatal(err)
-			}
-			fmt.Printf("%d: %s\n", msg.Type, msg.Data)
-
-			_, err = conn.Write(buf[:n])
-			if err != nil {
-				log.Fatal(err)
-			}
-		}(conn)
 	}
 
 	pass, err := bcrypt.GenerateFromPassword([]byte("12345678"), bcrypt.DefaultCost)
@@ -115,6 +62,13 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Printf("%v: %s\n", session.Id, info.Format())
+
+	err = api.Listen("/tmp/estate.sock", func(conn *net.Conn, r *api.Request) {
+		fmt.Printf("%d: %v\n", r.Func, r.Args)
+	})
+	if err != nil {
+		log.Fatal()
+	}
 
 	http.HandleFunc("/", rootHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
