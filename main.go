@@ -76,6 +76,36 @@ func handleFUserCreate(r *api.Request) (*api.Response, error) {
 	return &api.Response{Code: 0, Data: nil}, nil
 }
 
+func handleFLogIn(r *api.Request) (*api.Response, error) {
+	// parse args
+	var args api.ArgsFLogIn
+	err := CustomUnmarshal(r.Args, &args)
+	if err != nil {
+		return &api.Response{Code: api.EArgsInval, Data: nil}, nil
+	}
+
+	session, err := database.OpenSession(db, args.Login, args.Password)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		} else if err.Error() == "incorrect password" {
+			return &api.Response{Code: api.EPassWrong, Data: nil}, nil
+		}
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
+	}
+
+	var resp = api.RespFLogIn{
+		Token: string(session.Token),
+	}
+	data, err := msgpack.Marshal(resp)
+	if err != nil {
+		// TODO: close session
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
+	}
+
+	return &api.Response{Code: 0, Data: data}, nil
+}
+
 var apiFHandlers [api.FNull]api.RequestHandler
 
 func handleRequest(r *api.Request) (*api.Response, error) {
@@ -94,6 +124,7 @@ func main() {
 	apiFHandlers[api.FPing] = handleFPing
 
 	apiFHandlers[api.FUserCreate] = handleFUserCreate
+	apiFHandlers[api.FLogIn] = handleFLogIn
 
 	/* =(setup handlers)= */
 

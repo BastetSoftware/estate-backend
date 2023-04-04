@@ -14,7 +14,7 @@ const (
 	FPing uint8 = iota
 
 	FUserCreate
-	//FLogIn
+	FLogIn
 	//FLogOut
 	//FUserInfo
 
@@ -26,6 +26,11 @@ type Request struct {
 	Args []byte
 }
 
+type Response struct {
+	Code uint8
+	Data []byte
+}
+
 type ArgsFUserCreate struct {
 	Login      string
 	Password   string
@@ -34,13 +39,19 @@ type ArgsFUserCreate struct {
 	Patronymic string
 }
 
-type Response struct {
-	Code uint8
-	Data []byte
+type ArgsFLogIn struct {
+	Login    string
+	Password string
+}
+
+type RespFLogIn struct {
+	Token string
 }
 
 const (
 	EExists uint8 = iota + 1 // record exists
+	ENoEntry
+	EPassWrong
 
 	EArgsInval uint8 = 253 // invalid arguments
 	ENoFun     uint8 = 254 // function does not exist
