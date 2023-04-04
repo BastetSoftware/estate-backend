@@ -18,72 +18,73 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 var db *sql.DB // TODO: make local
 
-func handleRequest(conn net.Conn, r *api.Request) (*api.Response, error) {
-	switch r.Func {
-	case api.FPing:
-		response := api.Response{
-			Code: 0,
-			Data: nil,
-		}
-
-		return &response, nil
-
-	case api.FUserCreate:
-		var response api.Response
-
-		var args api.ArgsFUserCreate
-		err := msgpack.Unmarshal(r.Args, &args)
-		if err != nil {
-			response = api.Response{
-				Code: 1,
-				Data: nil,
-			}
-			return &response, nil
-		}
-
-		passHash, err := bcrypt.GenerateFromPassword([]byte(args.Password), bcrypt.DefaultCost)
-		if err != nil {
-			response = api.Response{
-				Code: 1,
-				Data: nil,
-			}
-			return &response, nil
-		}
-
-		var patr *string = nil
-		if args.Patronymic != "" {
-			patr = &args.Patronymic // TODO: this is unsafe
-		}
-		userInfo := database.UserInfo{
-			Id:         0,
-			Login:      args.Login,
-			PassHash:   passHash,
-			FirstName:  args.FirstName,
-			LastName:   args.LastName,
-			Patronymic: patr,
-			Role:       database.RoleUser,
-		}
-		err = userInfo.Register(db)
-		if err != nil {
-			response = api.Response{
-				Code: 1,
-				Data: nil,
-			}
-			return &response, nil
-		}
-
-		response = api.Response{
-			Code: 0,
-			Data: nil,
-		}
-		return &response, nil
-	}
-
+func handleFPing(r *api.Request) (*api.Response, error) {
 	response := api.Response{
-		Code: 255,
+		Code: 0,
 		Data: nil,
 	}
 	return &response, nil
+}
+
+func handleFUserCreate(r *api.Request) (*api.Response, error) {
+	// default - error
+	var response = api.Response{
+		Code: 1,
+		Data: nil,
+	}
+
+	var args api.ArgsFUserCreate
+	err := msgpack.Unmarshal(r.Args, &args)
+	if err != nil {
+		return &response, nil
+	}
+
+	passHash, err := bcrypt.GenerateFromPassword([]byte(args.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return &response, nil
+	}
+
+	var patr *string = nil
+	if args.Patronymic != "" {
+		patr = &args.Patronymic // TODO: this is unsafe
+	}
+	userInfo := database.UserInfo{
+		Id:         0,
+		Login:      args.Login,
+		PassHash:   passHash,
+		FirstName:  args.FirstName,
+		LastName:   args.LastName,
+		Patronymic: patr,
+		Role:       database.RoleUser,
+	}
+	err = userInfo.Register(db)
+	if err != nil {
+		return &response, nil
+	}
+
+	// success
+	response = api.Response{
+		Code: 0,
+		Data: nil,
+	}
+	return &response, nil
+}
+
+var apiFHandlers = [...]func(request *api.Request) (*api.Response, error){
+	handleFPing,
+	handleFUserCreate,
+}
+
+func handleRequest(conn net.Conn, r *api.Request) (*api.Response, error) {
+	if int(r.Func) >= len(apiFHandlers) {
+		response := api.Response{
+			Code: 255,
+			Data: nil,
+		}
+		return &response, nil
+	}
+
+	return apiFHandlers[r.Func](r)
 }
 
 func main() {
