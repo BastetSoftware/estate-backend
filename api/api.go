@@ -14,9 +14,11 @@ const (
 	FPing uint8 = iota
 
 	FUserCreate
-	FLogIn
-	FLogOut
-	FUserInfo
+	//FLogIn
+	//FLogOut
+	//FUserInfo
+
+	FNull uint = iota
 )
 
 type Request struct {
@@ -47,7 +49,7 @@ const (
 
 // TODO: remove conn (?)
 
-type RequestHandler func(conn net.Conn, r *Request) (*Response, error)
+type RequestHandler func(r *Request) (*Response, error)
 
 // TODO: add cleanup func
 
@@ -93,7 +95,7 @@ func Listen(address string, handler RequestHandler) error {
 			}
 
 			// handle the request
-			response, err := handler(conn, &msg)
+			response, err := handler(&msg)
 			if err != nil {
 				log.Fatal(err)
 			}

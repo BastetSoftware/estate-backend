@@ -10,7 +10,6 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/bcrypt"
 	"log"
-	"net"
 	"net/http"
 )
 
@@ -77,12 +76,9 @@ func handleFUserCreate(r *api.Request) (*api.Response, error) {
 	return &api.Response{Code: 0, Data: nil}, nil
 }
 
-var apiFHandlers = [...]func(request *api.Request) (*api.Response, error){
-	handleFPing,
-	handleFUserCreate,
-}
+var apiFHandlers [api.FNull]api.RequestHandler
 
-func handleRequest(conn net.Conn, r *api.Request) (*api.Response, error) {
+func handleRequest(r *api.Request) (*api.Response, error) {
 	if int(r.Func) >= len(apiFHandlers) {
 		return &api.Response{Code: api.ENoFun, Data: nil}, nil
 	}
@@ -92,6 +88,14 @@ func handleRequest(conn net.Conn, r *api.Request) (*api.Response, error) {
 
 func main() {
 	var err error
+
+	/* setup handlers */
+
+	apiFHandlers[api.FPing] = handleFPing
+
+	apiFHandlers[api.FUserCreate] = handleFUserCreate
+
+	/* =(setup handlers)= */
 
 	db, err = database.OpenDB()
 	if err != nil {
