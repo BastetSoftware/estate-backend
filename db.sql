@@ -70,5 +70,5 @@ create table sessions
 
 /* setup base configuration */
 
-insert into roles (name) values ('admin')
-
+insert into roles (name) values ('admin');
+insert into roles (name) values ('user');

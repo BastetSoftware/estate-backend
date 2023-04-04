@@ -11,20 +11,35 @@ import (
 )
 
 const (
-	FPing = iota
+	FPing uint8 = iota
 
 	FUserCreate
-	FLogin
-	FLogout
+	FLogIn
+	FLogOut
 	FUserInfo
 )
 
 type Request struct {
-	Func int8
+	Func uint8
 	Args []byte
 }
 
-type RequestHandler func(conn *net.Conn, r *Request)
+type ArgsFUserCreate struct {
+	Login      string
+	Password   string
+	FirstName  string
+	LastName   string
+	Patronymic string
+}
+
+type Response struct {
+	Code uint8
+	Data []byte
+}
+
+// TODO: remove conn (?)
+
+type RequestHandler func(conn net.Conn, r *Request) (*Response, error)
 
 // TODO: add cleanup func
 
@@ -55,18 +70,37 @@ func Listen(address string, handler RequestHandler) error {
 		go func(conn net.Conn) {
 			defer conn.Close()
 
+			// read the request
 			buf := make([]byte, 4096)
 			n, err := conn.Read(buf)
 			if err != nil {
 				log.Fatal(err)
 			}
 
+			// deserialize the request
 			var msg Request
 			err = msgpack.Unmarshal(buf[:n], &msg)
 			if err != nil {
 				log.Fatal(err)
 			}
-			handler(&conn, &msg)
+
+			// handle the request
+			response, err := handler(conn, &msg)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// serialize the response
+			data, err := msgpack.Marshal(response)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// send the response
+			_, err = conn.Write(data)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}(conn)
 	}
 
