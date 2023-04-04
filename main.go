@@ -1,7 +1,9 @@
 package main
 
 import (
+	"BastetSoftware/backend/database"
 	"fmt"
+	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net"
@@ -22,7 +24,7 @@ func main() {
 	var err error
 	var db *sql.DB
 
-	db, err = dbOpen()
+	db, err = database.OpenDB()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,7 +38,7 @@ func main() {
 	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-channel
-		err := os.Remove("/run/estate.sock")
+		err := os.Remove("/tmp/estate.sock")
 		if err != nil {
 			log.Fatalf("Unable to remove the socket: %v", err)
 		}
@@ -59,6 +61,16 @@ func main() {
 				log.Fatal(err)
 			}
 
+			var msg struct {
+				Type int32
+				Data string
+			}
+			err = msgpack.Unmarshal(buf[:n], &msg)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("%d: %s\n", msg.Type, msg.Data)
+
 			_, err = conn.Write(buf[:n])
 			if err != nil {
 				log.Fatal(err)
@@ -70,14 +82,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	admin := UserInfo{
+	admin := database.UserInfo{
 		Id:         0,
 		Login:      "admin",
 		PassHash:   pass,
 		FirstName:  "Admin",
 		LastName:   "McServer",
 		Patronymic: nil,
-		Role:       RoleAdmin,
+		Role:       database.RoleAdmin,
 	}
 	err = admin.Register(db)
 	if err != nil {
@@ -93,12 +105,12 @@ func main() {
 		}
 	}
 
-	session, err := openSession(db, "admin", "12345678")
+	session, err := database.OpenSession(db, "admin", "12345678")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	info, err := getUserInfo(db, session.User)
+	info, err := database.GetUserInfo(db, session.User)
 	if err != nil {
 		log.Fatal(err)
 	}
