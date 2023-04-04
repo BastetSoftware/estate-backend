@@ -3,8 +3,10 @@ package main
 import (
 	"BastetSoftware/backend/api"
 	"BastetSoftware/backend/database"
+	"bytes"
 	"database/sql"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/bcrypt"
 	"log"
@@ -18,30 +20,33 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 var db *sql.DB // TODO: make local
 
+func CustomUnmarshal(data []byte, v interface{}) error {
+	dec := msgpack.GetDecoder()
+
+	dec.Reset(bytes.NewReader(data))
+	dec.DisallowUnknownFields(true)
+	err := dec.Decode(v)
+
+	msgpack.PutDecoder(dec)
+
+	return err
+}
+
 func handleFPing(r *api.Request) (*api.Response, error) {
-	response := api.Response{
-		Code: 0,
-		Data: nil,
-	}
-	return &response, nil
+	return &api.Response{Code: 0, Data: nil}, nil
 }
 
 func handleFUserCreate(r *api.Request) (*api.Response, error) {
-	// default - error
-	var response = api.Response{
-		Code: 1,
-		Data: nil,
-	}
-
+	// parse args
 	var args api.ArgsFUserCreate
-	err := msgpack.Unmarshal(r.Args, &args)
+	err := CustomUnmarshal(r.Args, &args)
 	if err != nil {
-		return &response, nil
+		return &api.Response{Code: api.EArgsInval, Data: nil}, nil
 	}
 
 	passHash, err := bcrypt.GenerateFromPassword([]byte(args.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return &response, nil
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
 	}
 
 	var patr *string = nil
@@ -59,15 +64,17 @@ func handleFUserCreate(r *api.Request) (*api.Response, error) {
 	}
 	err = userInfo.Register(db)
 	if err != nil {
-		return &response, nil
+		switch e := err.(type) {
+		case *mysql.MySQLError:
+			if e.Number == 1062 {
+				return &api.Response{Code: api.EExists, Data: nil}, nil
+			}
+		}
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
 	}
 
 	// success
-	response = api.Response{
-		Code: 0,
-		Data: nil,
-	}
-	return &response, nil
+	return &api.Response{Code: 0, Data: nil}, nil
 }
 
 var apiFHandlers = [...]func(request *api.Request) (*api.Response, error){

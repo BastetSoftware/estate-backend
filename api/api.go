@@ -37,6 +37,14 @@ type Response struct {
 	Data []byte
 }
 
+const (
+	EExists uint8 = iota + 1 // record exists
+
+	EArgsInval uint8 = 253 // invalid arguments
+	ENoFun     uint8 = 254 // function does not exist
+	EUnknown   uint8 = 255 // unknown error
+)
+
 // TODO: remove conn (?)
 
 type RequestHandler func(conn net.Conn, r *Request) (*Response, error)
