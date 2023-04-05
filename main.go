@@ -106,6 +106,22 @@ func handleFLogIn(r *api.Request) (*api.Response, error) {
 	return &api.Response{Code: 0, Data: data}, nil
 }
 
+func handleFLogOut(r *api.Request) (*api.Response, error) {
+	// parse args
+	var args api.ArgsFLogOut
+	err := CustomUnmarshal(r.Args, &args)
+	if err != nil {
+		return &api.Response{Code: api.EArgsInval, Data: nil}, nil
+	}
+
+	err = database.CloseSession(db, []byte(args.Token))
+	if err != nil {
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil // TODO: proper error handling
+	}
+
+	return &api.Response{Code: 0, Data: nil}, err
+}
+
 var apiFHandlers [api.FNull]api.RequestHandler
 
 func handleRequest(r *api.Request) (*api.Response, error) {
@@ -125,6 +141,7 @@ func main() {
 
 	apiFHandlers[api.FUserCreate] = handleFUserCreate
 	apiFHandlers[api.FLogIn] = handleFLogIn
+	apiFHandlers[api.FLogOut] = handleFLogOut
 
 	/* =(setup handlers)= */
 

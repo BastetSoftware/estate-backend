@@ -10,12 +10,13 @@ import (
 	"syscall"
 )
 
+//goland:noinspection GoIrregularIota
 const (
 	FPing uint8 = iota
 
 	FUserCreate
 	FLogIn
-	//FLogOut
+	FLogOut
 	//FUserInfo
 
 	FNull uint = iota
@@ -31,6 +32,8 @@ type Response struct {
 	Data []byte
 }
 
+/* FUserCreate */
+
 type ArgsFUserCreate struct {
 	Login      string
 	Password   string
@@ -39,12 +42,20 @@ type ArgsFUserCreate struct {
 	Patronymic string
 }
 
+/* FLogIn */
+
 type ArgsFLogIn struct {
 	Login    string
 	Password string
 }
 
 type RespFLogIn struct {
+	Token string
+}
+
+/* FLogOut */
+
+type ArgsFLogOut struct {
 	Token string
 }
 

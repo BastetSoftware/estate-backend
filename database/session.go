@@ -58,3 +58,23 @@ func OpenSession(db *sql.DB, login string, pass string) (*Session, error) {
 
 	return &session, nil
 }
+
+func CloseSession(db *sql.DB, token []byte) error {
+	result, err := db.Exec(
+		"DELETE FROM sessions WHERE token=?",
+		token,
+	)
+	if err != nil {
+		return err
+	}
+
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n < 1 {
+		return fmt.Errorf("no rows were affected")
+	}
+
+	return nil
+}
