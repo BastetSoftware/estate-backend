@@ -2,11 +2,14 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
+	"errors"
 	"golang.org/x/crypto/bcrypt"
 	"math/rand"
 	"time"
 )
+
+var ErrPassWrong = errors.New("incorrect password")
+var ErrNotLoggedIn = errors.New("not logged in")
 
 type Session struct {
 	Id         int64
@@ -26,7 +29,7 @@ func OpenSession(db *sql.DB, login string, pass string) (*Session, error) {
 
 	err = bcrypt.CompareHashAndPassword(user.PassHash, []byte(pass))
 	if err != nil {
-		return nil, fmt.Errorf("incorrect password")
+		return nil, ErrPassWrong
 	}
 
 	// generate a token
@@ -35,6 +38,7 @@ func OpenSession(db *sql.DB, login string, pass string) (*Session, error) {
 		token[i] = tokenAlphabet[rand.Intn(len(tokenAlphabet))]
 	}
 
+	// create and insert the new session
 	var session = Session{
 		Id:         0,
 		Token:      token,
@@ -73,7 +77,7 @@ func CloseSession(db *sql.DB, token []byte) error {
 		return err
 	}
 	if n < 1 {
-		return fmt.Errorf("no rows were affected")
+		return ErrNotLoggedIn
 	}
 
 	return nil

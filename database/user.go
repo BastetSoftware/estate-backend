@@ -2,8 +2,13 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
 )
+
+var ErrUserExists = errors.New("user already exists")
+var ErrNoUser = errors.New("user does not exist")
 
 type UserInfo struct {
 	Id         int64
@@ -45,6 +50,12 @@ func RegisterUser(db *sql.DB, u *UserInfo) (int64, error) {
 		u.Login, u.PassHash, u.FirstName, u.LastName, u.Patronymic, u.Role,
 	)
 	if err != nil {
+		switch e := err.(type) {
+		case *mysql.MySQLError:
+			if e.Number == 1062 {
+				return 0, ErrUserExists
+			}
+		}
 		return 0, err
 	}
 
@@ -69,11 +80,11 @@ func GetUserInfo(db *sql.DB, id int64) (*UserInfo, error) {
 		&user.Patronymic,
 		&user.Role,
 	); err != nil {
-		return nil, err
-	}
-
-	if err := row.Err(); err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, ErrNoUser
+		} else {
+			return nil, err
+		}
 	}
 
 	return &user, nil
@@ -92,11 +103,11 @@ func FindUserInfo(db *sql.DB, login string) (*UserInfo, error) {
 		&user.Patronymic,
 		&user.Role,
 	); err != nil {
-		return nil, err
-	}
-
-	if err := row.Err(); err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, ErrNoUser
+		} else {
+			return nil, err
+		}
 	}
 
 	return &user, nil

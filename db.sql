@@ -63,7 +63,7 @@ create table attachments
 create table sessions
 (
     id          int auto_increment primary key,
-    token       varchar(32) not null,
+    token       varchar(32) not null unique,
     expiry_date datetime    not null,
     user        int         not null,
     foreign key (user) references users (id)

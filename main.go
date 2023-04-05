@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
-	"github.com/go-sql-driver/mysql"
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/bcrypt"
 	"log"
@@ -62,13 +61,12 @@ func handleFUserCreate(r *api.Request) (*api.Response, error) {
 		Role:       database.RoleUser,
 	}
 	err = userInfo.Register(db)
-	if err != nil {
-		switch e := err.(type) {
-		case *mysql.MySQLError:
-			if e.Number == 1062 {
-				return &api.Response{Code: api.EExists, Data: nil}, nil
-			}
-		}
+	switch err {
+	case nil:
+		break
+	case database.ErrUserExists:
+		return &api.Response{Code: api.EExists, Data: nil}, nil
+	default:
 		return &api.Response{Code: api.EUnknown, Data: nil}, nil
 	}
 
@@ -85,12 +83,14 @@ func handleFLogIn(r *api.Request) (*api.Response, error) {
 	}
 
 	session, err := database.OpenSession(db, args.Login, args.Password)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return &api.Response{Code: api.ENoEntry, Data: nil}, nil
-		} else if err.Error() == "incorrect password" {
-			return &api.Response{Code: api.EPassWrong, Data: nil}, nil
-		}
+	switch err {
+	case nil:
+		break
+	case sql.ErrNoRows:
+		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+	case database.ErrPassWrong:
+		return &api.Response{Code: api.EPassWrong, Data: nil}, nil
+	default:
 		return &api.Response{Code: api.EUnknown, Data: nil}, nil
 	}
 
@@ -116,7 +116,7 @@ func handleFLogOut(r *api.Request) (*api.Response, error) {
 
 	err = database.CloseSession(db, []byte(args.Token))
 	if err != nil {
-		return &api.Response{Code: api.EUnknown, Data: nil}, nil // TODO: proper error handling
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
 	}
 
 	return &api.Response{Code: 0, Data: nil}, err
