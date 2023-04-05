@@ -47,9 +47,8 @@ func handleFUserCreate(r *api.Request) (*api.Response, error) {
 		return &api.Response{Code: api.EUnknown, Data: nil}, nil
 	}
 
-	var patr *string = nil
-	if args.Patronymic != "" {
-		patr = &args.Patronymic // TODO: this is unsafe
+	if args.Patronymic == "" {
+		args.Patronymic = "-"
 	}
 	userInfo := database.UserInfo{
 		Id:         0,
@@ -57,7 +56,7 @@ func handleFUserCreate(r *api.Request) (*api.Response, error) {
 		PassHash:   passHash,
 		FirstName:  args.FirstName,
 		LastName:   args.LastName,
-		Patronymic: patr,
+		Patronymic: args.Patronymic,
 		Role:       database.RoleUser,
 	}
 	err = userInfo.Register(db)

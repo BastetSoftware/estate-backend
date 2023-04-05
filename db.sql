@@ -2,8 +2,8 @@ create table objects
 (
     id          int auto_increment primary key,
     name        text         not null,
-    description text         null,
-    type        varchar(256) null
+    description text         not null,
+    type        varchar(256) not null
 );
 
 create table roles
@@ -20,7 +20,7 @@ create table tasks
     object      int          not null,
     description text         not null,
     deadline    datetime     null,
-    status      varchar(256) null,
+    status      varchar(256) not null,
     
     foreign key (object) references objects (id)
 );
@@ -32,7 +32,7 @@ create table users
     pass_hash  binary(60)   not null,
     first_name varchar(256) not null,
     last_name  varchar(256) not null,
-    patronymic varchar(256) null,
+    patronymic varchar(256) not null,
     role       int          not null,
     
     foreign key (role) references roles (id)

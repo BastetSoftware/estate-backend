@@ -16,14 +16,14 @@ type UserInfo struct {
 	PassHash   []byte
 	FirstName  string
 	LastName   string
-	Patronymic *string
+	Patronymic string
 	Role       int64
 }
 
 func (u UserInfo) Format() string {
-	var patronymic string
-	if u.Patronymic != nil {
-		patronymic = *u.Patronymic
+	var patronymic = u.Patronymic
+	if patronymic == "" {
+		patronymic = "-"
 	} else {
 		patronymic = "<none>"
 	}
