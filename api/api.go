@@ -17,7 +17,7 @@ const (
 	FUserCreate
 	FLogIn
 	FLogOut
-	//FUserInfo
+	FUserInfo
 
 	FNull uint = iota
 )
@@ -59,10 +59,26 @@ type ArgsFLogOut struct {
 	Token string
 }
 
+/* FUserInfo */
+
+type ArgsFUserInfo struct {
+	Token string
+	Login string // login
+}
+
+// TODO: add role
+type RespFUserInfo struct {
+	Login      string
+	FirstName  string
+	LastName   string
+	Patronymic string
+}
+
 const (
 	EExists uint8 = iota + 1 // record exists
 	ENoEntry
 	EPassWrong
+	ENotLoggedIn
 
 	EArgsInval uint8 = 253 // invalid arguments
 	ENoFun     uint8 = 254 // function does not exist
@@ -70,11 +86,9 @@ const (
 )
 
 // TODO: remove conn (?)
-
 type RequestHandler func(r *Request) (*Response, error)
 
 // TODO: add cleanup func
-
 func Listen(address string, handler RequestHandler) error {
 	socket, err := net.Listen("unix", address)
 	if err != nil {

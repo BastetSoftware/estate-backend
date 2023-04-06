@@ -85,7 +85,7 @@ func handleFLogIn(r *api.Request) (*api.Response, error) {
 	switch err {
 	case nil:
 		break
-	case sql.ErrNoRows:
+	case database.ErrNoUser:
 		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
 	case database.ErrPassWrong:
 		return &api.Response{Code: api.EPassWrong, Data: nil}, nil
@@ -121,6 +121,48 @@ func handleFLogOut(r *api.Request) (*api.Response, error) {
 	return &api.Response{Code: 0, Data: nil}, err
 }
 
+func handleFUserInfo(r *api.Request) (*api.Response, error) {
+	// parse args
+	var args api.ArgsFUserInfo
+	err := CustomUnmarshal(r.Args, &args)
+	if err != nil {
+		return &api.Response{Code: api.EArgsInval, Data: nil}, nil
+	}
+
+	_, err = database.VerifySession(db, []byte(args.Token))
+	switch err {
+	case nil:
+		break
+	case database.ErrNotLoggedIn:
+		return &api.Response{Code: api.ENotLoggedIn, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
+	}
+
+	userinfo, err := database.FindUserInfo(db, args.Login)
+	switch err {
+	case nil:
+		break
+	case database.ErrNoUser:
+		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
+	}
+
+	resp := api.RespFUserInfo{
+		Login:      userinfo.Login,
+		FirstName:  userinfo.FirstName,
+		LastName:   userinfo.LastName,
+		Patronymic: userinfo.Patronymic,
+	}
+	data, err := msgpack.Marshal(resp)
+	if err != nil {
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
+	}
+
+	return &api.Response{Code: 0, Data: data}, nil
+}
+
 var apiFHandlers [api.FNull]api.RequestHandler
 
 func handleRequest(r *api.Request) (*api.Response, error) {
@@ -141,6 +183,7 @@ func main() {
 	apiFHandlers[api.FUserCreate] = handleFUserCreate
 	apiFHandlers[api.FLogIn] = handleFLogIn
 	apiFHandlers[api.FLogOut] = handleFLogOut
+	apiFHandlers[api.FUserInfo] = handleFUserInfo
 
 	/* =(setup handlers)= */
 

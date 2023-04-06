@@ -14,7 +14,7 @@ var ErrNotLoggedIn = errors.New("not logged in")
 type Session struct {
 	Id         int64
 	Token      []byte
-	ExpiryDate time.Time
+	ExpiryDate int64
 	User       int64
 }
 
@@ -42,7 +42,7 @@ func OpenSession(db *sql.DB, login string, pass string) (*Session, error) {
 	var session = Session{
 		Id:         0,
 		Token:      token,
-		ExpiryDate: time.Now().AddDate(0, 0, 2),
+		ExpiryDate: time.Now().AddDate(0, 0, 2).Unix(),
 		User:       user.Id,
 	}
 	result, err := db.Exec(
@@ -81,4 +81,25 @@ func CloseSession(db *sql.DB, token []byte) error {
 	}
 
 	return nil
+}
+
+func VerifySession(db *sql.DB, token []byte) (*Session, error) {
+	row := db.QueryRow("SELECT * FROM sessions WHERE token = ?", token)
+
+	var session Session
+	err := row.Scan(
+		&session.Id,
+		&session.Token,
+		&session.ExpiryDate,
+		&session.User,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNotLoggedIn
+		} else {
+			return nil, err
+		}
+	}
+
+	return &session, nil
 }
