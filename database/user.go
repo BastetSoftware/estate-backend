@@ -147,7 +147,7 @@ func UserChangePasswordHash(db *sql.DB, id int64, pass_hash []byte) error {
 }
 
 func UserChangeName(db *sql.DB, id int64, nameType int, newName string) error {
-	var nameTypes = [2]string{"first_name", "last_name"}
+	var nameTypes = [3]string{"first_name", "last_name", "patronymic"}
 	if nameType >= len(nameTypes) || nameType < 0 {
 		return fmt.Errorf("invalid name type")
 	}

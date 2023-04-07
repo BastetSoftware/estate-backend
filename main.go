@@ -217,7 +217,7 @@ func handleFUserEdit(r *api.Request) (*api.Response, error) {
 		}
 	}
 
-	var names = [2]*string{args.FirstName, args.LastName}
+	var names = [3]*string{args.FirstName, args.LastName, args.Patronymic}
 	for i, n := range names {
 		if n == nil {
 			continue
