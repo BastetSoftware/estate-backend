@@ -46,7 +46,7 @@ func (u UserInfo) Register(db *sql.DB) error {
 
 func RegisterUser(db *sql.DB, u *UserInfo) (int64, error) {
 	result, err := db.Exec(
-		"INSERT INTO users (login, pass_hash, first_name, last_name, patronymic, role) VALUES (?,?,?,?,?,?)",
+		"INSERT INTO users (login, pass_hash, first_name, last_name, patronymic, role) VALUES (?,?,?,?,?,?);",
 		u.Login, u.PassHash, u.FirstName, u.LastName, u.Patronymic, u.Role,
 	)
 	if err != nil {
@@ -68,7 +68,7 @@ func RegisterUser(db *sql.DB, u *UserInfo) (int64, error) {
 }
 
 func GetUserInfo(db *sql.DB, id int64) (*UserInfo, error) {
-	row := db.QueryRow("SELECT * FROM users WHERE id = ?", id)
+	row := db.QueryRow("SELECT * FROM users WHERE id = ?;", id)
 
 	var user UserInfo
 	if err := row.Scan(
@@ -91,7 +91,7 @@ func GetUserInfo(db *sql.DB, id int64) (*UserInfo, error) {
 }
 
 func FindUserInfo(db *sql.DB, login string) (*UserInfo, error) {
-	row := db.QueryRow("SELECT * FROM users WHERE login = ?", login)
+	row := db.QueryRow("SELECT * FROM users WHERE login = ?;", login)
 
 	var user UserInfo
 	if err := row.Scan(
@@ -111,4 +111,37 @@ func FindUserInfo(db *sql.DB, login string) (*UserInfo, error) {
 	}
 
 	return &user, nil
+}
+
+func UserChangeLogin(db *sql.DB, id int64, newLogin string) error {
+	_, err := db.Exec("UPDATE users SET login=? WHERE id=?;", newLogin, id)
+	switch e := err.(type) {
+	case nil:
+		break
+	case *mysql.MySQLError:
+		if e.Number == 1062 {
+			return ErrUserExists
+		}
+	default:
+		if err == sql.ErrNoRows {
+			return ErrNoUser
+		} else {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func UserChangePasswordHash(db *sql.DB, id int64, pass_hash []byte) error {
+	_, err := db.Exec("UPDATE users SET pass_hash=? WHERE id=?;", pass_hash, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNoUser
+		} else {
+			return err
+		}
+	}
+
+	return nil
 }
