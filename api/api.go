@@ -156,7 +156,7 @@ func Listen(address string, handler RequestHandler) error {
 			// handle the request
 			response, err := handler(&msg)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 			}
 
 			// serialize the response
