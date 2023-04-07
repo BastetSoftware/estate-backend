@@ -61,7 +61,6 @@ func handleFUserCreate(r *api.Request) (*api.Response, error) {
 		FirstName:  args.FirstName,
 		LastName:   args.LastName,
 		Patronymic: args.Patronymic,
-		Role:       database.RoleUser,
 	}
 	err = userInfo.Register(db)
 	switch err {
@@ -70,6 +69,7 @@ func handleFUserCreate(r *api.Request) (*api.Response, error) {
 	case database.ErrUserExists:
 		return &api.Response{Code: api.EExists, Data: nil}, nil
 	default:
+		fmt.Println(err)
 		return &api.Response{Code: api.EUnknown, Data: nil}, nil
 	}
 

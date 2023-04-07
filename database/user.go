@@ -17,7 +17,6 @@ type UserInfo struct {
 	FirstName  string
 	LastName   string
 	Patronymic string
-	Role       int64
 }
 
 func (u UserInfo) Format() string {
@@ -33,8 +32,7 @@ func (u UserInfo) Format() string {
 		u.PassHash, " ",
 		u.FirstName, " ",
 		u.LastName, " ",
-		patronymic, " ",
-		u.Role,
+		patronymic,
 	)
 }
 
@@ -46,8 +44,8 @@ func (u UserInfo) Register(db *sql.DB) error {
 
 func RegisterUser(db *sql.DB, u *UserInfo) (int64, error) {
 	result, err := db.Exec(
-		"INSERT INTO users (login, pass_hash, first_name, last_name, patronymic, role) VALUES (?,?,?,?,?,?);",
-		u.Login, u.PassHash, u.FirstName, u.LastName, u.Patronymic, u.Role,
+		"INSERT INTO users (login, pass_hash, first_name, last_name, patronymic) VALUES (?,?,?,?,?);",
+		u.Login, u.PassHash, u.FirstName, u.LastName, u.Patronymic,
 	)
 	if err != nil {
 		switch e := err.(type) {
@@ -78,7 +76,6 @@ func GetUserInfo(db *sql.DB, id int64) (*UserInfo, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.Patronymic,
-		&user.Role,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNoUser
@@ -101,7 +98,6 @@ func FindUserInfo(db *sql.DB, login string) (*UserInfo, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.Patronymic,
-		&user.Role,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNoUser
