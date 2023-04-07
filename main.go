@@ -170,12 +170,72 @@ func handleFUserInfo(r *api.Request) (*api.Response, error) {
 func handleFUserEdit(r *api.Request) (*api.Response, error) {
 	// parse args
 	var args api.ArgsFUserEdit
-	err := CustomUnmarshal(r.Args, &args)
-	if err != nil {
+	err := msgpack.Unmarshal(r.Args, &args)
+	if err != nil || args.Token == "" {
 		return &api.Response{Code: api.EArgsInval, Data: nil}, nil
 	}
 
-	return &api.Response{Code: api.ENoFun, Data: nil}, nil
+	session, err := database.VerifySession(db, []byte(args.Token))
+	switch err {
+	case nil:
+		break
+	case database.ErrNotLoggedIn:
+		return &api.Response{Code: api.ENotLoggedIn, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
+	}
+
+	uid := session.User
+
+	if args.Login != nil {
+		err = database.UserChangeLogin(db, uid, *args.Login)
+		switch err {
+		case nil:
+			break
+		case database.ErrNoUser:
+			return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		case database.ErrUserExists:
+			return &api.Response{Code: api.EExists, Data: nil}, nil
+		default:
+			return &api.Response{Code: api.EUnknown, Data: nil}, nil
+		}
+	}
+
+	if args.Password != nil {
+		passHash, err := bcrypt.GenerateFromPassword([]byte(*args.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return &api.Response{Code: api.EUnknown, Data: nil}, nil
+		}
+		err = database.UserChangePasswordHash(db, uid, passHash)
+		switch err {
+		case nil:
+			break
+		case database.ErrNoUser:
+			return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		default:
+			return &api.Response{Code: api.EUnknown, Data: nil}, nil
+		}
+	}
+
+	var names = [3]*string{args.FirstName, args.LastName, args.Patronymic}
+	for i, n := range names {
+		if n == nil {
+			continue
+		}
+
+		err = database.UserChangeName(db, uid, i, *n)
+		switch err {
+		case nil:
+			break
+		case database.ErrNoUser:
+			return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		default:
+			fmt.Println(err)
+			return &api.Response{Code: api.EUnknown, Data: nil}, nil
+		}
+	}
+
+	return &api.Response{Code: 0, Data: nil}, nil
 }
 
 var apiFHandlers [api.FNull]api.RequestHandler

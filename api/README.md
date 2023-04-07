@@ -149,3 +149,32 @@ Func = 4
 | ENotLoggedIn | request sender is not logged in or session token is invalid |
 | ENoEntry     | target user does not exist                                  |
 | EUnknown     | unknown error                                               |
+
+#### Edit user info
+
+Func = 5
+
+##### Request args
+
+| argument   | type    | description                        |
+|------------|---------|------------------------------------|
+| Token      | string  | session token                      |
+| Login      | *string | new login (null if unchanged)      |
+| Password   | *string | new password (null if unchanged)   |
+| FirstName  | *string | new first name (null if unchanged) |
+| LastName   | *string | new last name (null if unchanged)  |
+| Patronymic | *string | new patronymic (null if unchanged) |
+
+##### Response data
+
+No specific response data
+
+##### Possible errors
+
+| error        | description                                                 |
+|--------------|-------------------------------------------------------------|
+| EArgsInval   | invalid request arguments                                   |
+| ENotLoggedIn | request sender is not logged in or session token is invalid |
+| ENoEntry     | user does not exist                                         |
+| EExists      | user with this new login already exists                     |
+| EUnknown     | unknown error                                               |

@@ -100,7 +100,6 @@ const (
 // TODO: remove conn (?)
 type RequestHandler func(r *Request) (*Response, error)
 
-// TODO: add cleanup func
 func Listen(address string, handler RequestHandler) error {
 	socket, err := net.Listen("tcp4", address)
 	if err != nil {
