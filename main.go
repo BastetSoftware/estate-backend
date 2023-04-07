@@ -239,6 +239,106 @@ func handleFUserEdit(r *api.Request) (*api.Response, error) {
 	return &api.Response{Code: 0, Data: nil}, nil
 }
 
+func handleFGroupCreate(r *api.Request) (*api.Response, error) {
+	// parse args
+	var args api.ArgsFGroupCreateRemove
+	err := CustomUnmarshal(r.Args, &args)
+	if err != nil {
+		return &api.Response{Code: api.EArgsInval, Data: nil}, nil
+	}
+
+	session, err := database.VerifySession(db, []byte(args.Token))
+	switch err {
+	case nil:
+		break
+	case database.ErrNotLoggedIn:
+		return &api.Response{Code: api.ENotLoggedIn, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
+	}
+
+	userinfo, err := database.GetUserInfo(db, session.User)
+	switch err {
+	case nil:
+		break
+	case database.ErrNoUser:
+		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
+	}
+
+	if !userinfo.ManagesGroups {
+		return &api.Response{Code: api.EAccessDenied, Data: nil}, nil
+	}
+
+	_, err = database.CreateGroup(db, args.Name)
+	switch err {
+	case nil:
+		break
+	case database.ErrGroupExists:
+		return &api.Response{Code: api.EExists, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
+	}
+
+	return &api.Response{Code: 0, Data: nil}, nil
+}
+
+func handleFGroupRemove(r *api.Request) (*api.Response, error) {
+	// parse args
+	var args api.ArgsFGroupCreateRemove
+	err := CustomUnmarshal(r.Args, &args)
+	if err != nil {
+		return &api.Response{Code: api.EArgsInval, Data: nil}, nil
+	}
+
+	session, err := database.VerifySession(db, []byte(args.Token))
+	switch err {
+	case nil:
+		break
+	case database.ErrNotLoggedIn:
+		return &api.Response{Code: api.ENotLoggedIn, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
+	}
+
+	userinfo, err := database.GetUserInfo(db, session.User)
+	switch err {
+	case nil:
+		break
+	case database.ErrNoUser:
+		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
+	}
+
+	if !userinfo.ManagesGroups {
+		return &api.Response{Code: api.EAccessDenied, Data: nil}, nil
+	}
+
+	group, err := database.FindGroup(db, args.Name)
+	switch err {
+	case nil:
+		break
+	case database.ErrNoGroup:
+		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
+	}
+
+	err = database.RemoveGroup(db, group.Id)
+	switch err {
+	case nil:
+		break
+	case database.ErrNoGroup:
+		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, nil
+	}
+
+	return &api.Response{Code: 0, Data: nil}, nil
+}
+
 var apiFHandlers [api.FNull]api.RequestHandler
 
 func handleRequest(r *api.Request) (*api.Response, error) {
@@ -261,6 +361,9 @@ func main() {
 	apiFHandlers[api.FLogOut] = handleFLogOut
 	apiFHandlers[api.FUserInfo] = handleFUserInfo
 	apiFHandlers[api.FUserEdit] = handleFUserEdit
+
+	apiFHandlers[api.FGroupCreate] = handleFGroupCreate
+	apiFHandlers[api.FGroupRemove] = handleFGroupRemove
 
 	/* =(setup handlers)= */
 

@@ -16,6 +16,26 @@ type Group struct {
 	Name string
 }
 
+func FindGroup(db *sql.DB, name string) (*Group, error) {
+	row := db.QueryRow(
+		"SELECT * FROM grps WHERE name=?;",
+		name,
+	)
+	var group Group
+	if err := row.Scan(
+		&group.Id,
+		&group.Name,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNoGroup
+		} else {
+			return nil, err
+		}
+	}
+
+	return &group, nil
+}
+
 func CreateGroup(db *sql.DB, name string) (*Group, error) {
 	result, err := db.Exec(
 		"INSERT INTO grps (name) VALUES (?);",

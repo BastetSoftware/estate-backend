@@ -20,6 +20,9 @@ const (
 	FUserInfo
 	FUserEdit
 
+	FGroupCreate
+	FGroupRemove
+
 	FNull uint = iota
 )
 
@@ -86,11 +89,20 @@ type ArgsFUserEdit struct {
 	Patronymic *string
 }
 
+/* FGroupCreate */
+/* FGroupRemove */
+
+type ArgsFGroupCreateRemove struct {
+	Token string
+	Name  string
+}
+
 const (
 	EExists uint8 = iota + 1 // record exists
 	ENoEntry
 	EPassWrong
 	ENotLoggedIn
+	EAccessDenied
 
 	EArgsInval uint8 = 253 // invalid arguments
 	ENoFun     uint8 = 254 // function does not exist

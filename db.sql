@@ -30,7 +30,14 @@ create table objects
     id          int auto_increment primary key,
     name        text         not null,
     description text         not null,
+    district    text         not null, -- округ
+    region      text         not null, -- район
+    address     text         not null, -- адрес
     type        varchar(256) not null,
+    state       text         not null,
+    area        int          not null, -- площадь
+    owner       text         not null, -- владелец
+    actual_user text         not null, -- фактический пользователь
     gid         int          not null,
     permissions tinyint      not null, -- 7,6 - reserved; 5,4 - user; 3,2 - group; 1,0 - other;
                                        -- levels: (0, 1, 2, 3) = (none, read, edit, manage)
