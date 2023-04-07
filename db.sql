@@ -10,7 +10,18 @@ create table roles
 (
     id   int auto_increment
          primary key,
-    name varchar(256) not null
+    name varchar(256) not null,
+
+    perm_role_create bool not null,
+    perm_role_remove bool not null,
+
+    perm_object_create bool not null,
+    perm_object_remove bool not null,
+    perm_object_modify bool not null,
+    perm_object_view   bool not null,
+
+    perm_user_remove bool not null,
+    perm_user_assign bool not null
 );
 
 create table tasks
@@ -71,5 +82,48 @@ create table sessions
 
 /* setup base configuration */
 
-insert into roles (name) values ('admin');
-insert into roles (name) values ('user');
+insert into roles
+(
+    name,
+
+    perm_role_create,
+    perm_role_remove,
+
+    perm_object_create,
+    perm_object_remove,
+    perm_object_modify,
+    perm_object_view,
+
+    perm_user_remove,
+    perm_user_assign
+)
+values
+(
+    'admin',
+    1, 1,
+    1, 1, 1, 1,
+    1, 1
+);
+
+insert into roles
+(
+    name,
+
+    perm_role_create,
+    perm_role_remove,
+
+    perm_object_create,
+    perm_object_remove,
+    perm_object_modify,
+    perm_object_view,
+
+    perm_user_remove,
+    perm_user_assign
+)
+values
+(
+    'pending',
+    0, 0,
+    0, 0, 0, 0,
+    0, 0
+);
