@@ -18,6 +18,7 @@ const (
 	FLogIn
 	FLogOut
 	FUserInfo
+	FUserEdit
 
 	FNull uint = iota
 )
@@ -74,6 +75,17 @@ type RespFUserInfo struct {
 	Patronymic string
 }
 
+/* FUserEdit */
+
+type ArgsFUserEdit struct {
+	Token      string
+	Login      *string
+	Password   *string
+	FirstName  *string
+	LastName   *string
+	Patronymic *string
+}
+
 const (
 	EExists uint8 = iota + 1 // record exists
 	ENoEntry
@@ -90,7 +102,7 @@ type RequestHandler func(r *Request) (*Response, error)
 
 // TODO: add cleanup func
 func Listen(address string, handler RequestHandler) error {
-	socket, err := net.Listen("unix", address)
+	socket, err := net.Listen("tcp4", address)
 	if err != nil {
 		return fmt.Errorf("unable to create a socket: %v", err)
 	}

@@ -14,6 +14,18 @@
 | Code  | uint8   | 0 if no errors occurred, error code otherwise |
 | Data  | uint8[] | function-specific return values               |
 
+## Error codes
+
+|     name     | code |
+|:------------:|:----:|
+|   EExists    |  1   |
+|   ENoEntry   |  2   |
+|  EPassWrong  |  3   |
+| ENotLoggedIn |  4   |
+|  EArgsInval  | 253  |
+|    ENoFun    | 254  |
+|   EUnknown   | 255  |
+
 ## Functions
 
 ### Service

@@ -30,6 +30,10 @@ func CustomUnmarshal(data []byte, v interface{}) error {
 	return err
 }
 
+func handleFReserved(r *api.Request) (*api.Response, error) {
+	return &api.Response{Code: api.ENoFun, Data: nil}, nil
+}
+
 func handleFPing(r *api.Request) (*api.Response, error) {
 	return &api.Response{Code: 0, Data: nil}, nil
 }
@@ -163,6 +167,17 @@ func handleFUserInfo(r *api.Request) (*api.Response, error) {
 	return &api.Response{Code: 0, Data: data}, nil
 }
 
+func handleFUserEdit(r *api.Request) (*api.Response, error) {
+	// parse args
+	var args api.ArgsFUserEdit
+	err := CustomUnmarshal(r.Args, &args)
+	if err != nil {
+		return &api.Response{Code: api.EArgsInval, Data: nil}, nil
+	}
+
+	return &api.Response{Code: api.ENoFun, Data: nil}, nil
+}
+
 var apiFHandlers [api.FNull]api.RequestHandler
 
 func handleRequest(r *api.Request) (*api.Response, error) {
@@ -184,6 +199,7 @@ func main() {
 	apiFHandlers[api.FLogIn] = handleFLogIn
 	apiFHandlers[api.FLogOut] = handleFLogOut
 	apiFHandlers[api.FUserInfo] = handleFUserInfo
+	apiFHandlers[api.FUserEdit] = handleFUserEdit
 
 	/* =(setup handlers)= */
 
@@ -192,11 +208,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = api.Listen("/tmp/estate.sock", handleRequest)
+	// err = api.Listen("/tmp/estate.sock", handleRequest)
+	err = api.Listen("localhost:8080", handleRequest)
 	if err != nil {
-		log.Fatal()
+		log.Fatal(err)
 	}
 
-	http.HandleFunc("/", rootHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	//http.HandleFunc("/", rootHandler)
+	//log.Fatal(http.ListenAndServe(":8080", nil))
 }
