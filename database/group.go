@@ -7,7 +7,9 @@ import (
 )
 
 var ErrGroupExists = errors.New("group already exists")
+var ErrNoGroup = errors.New("group does not exist")
 var ErrAlreadyInGroup = errors.New("user is already in group")
+var ErrNotInGroup = errors.New("user is not in group")
 
 type Group struct {
 	Id   int64
@@ -37,7 +39,39 @@ func CreateGroup(db *sql.DB, name string) (*Group, error) {
 	return &Group{Id: id, Name: name}, nil
 }
 
-func AddUserToGroup(db *sql.DB, uid int64, gid int64) error {
+func RemoveGroup(db *sql.DB, gid int64) error {
+	// remove all users from the group
+
+	result, err := db.Exec(
+		"DELETE FROM user_group_rel WHERE gid=?;",
+		gid,
+	)
+	if err != nil {
+		return err
+	}
+
+	// remove group itself
+
+	result, err = db.Exec(
+		"DELETE FROM grps WHERE id=?;",
+		gid,
+	)
+	if err != nil {
+		return err
+	}
+
+	n, err := result.RowsAffected()
+	switch {
+	case err != nil:
+		return err
+	case n == 0:
+		return ErrNoGroup
+	}
+
+	return nil
+}
+
+func GroupAddUser(db *sql.DB, uid int64, gid int64) error {
 	_, err := db.Exec(
 		"INSERT INTO user_group_rel (uid, gid) VALUES (?,?);",
 		uid, gid,
@@ -50,6 +84,27 @@ func AddUserToGroup(db *sql.DB, uid int64, gid int64) error {
 			}
 		}
 		return err
+	}
+
+	return nil
+}
+
+func GroupRemoveUser(db *sql.DB, uid int64, gid int64) error {
+	result, err := db.Exec(
+		"DELETE FROM user_group_rel WHERE uid=? AND gid=?;",
+		uid, gid,
+	)
+	if err != nil {
+		return err
+	}
+
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if n == 0 {
+		return ErrNotInGroup
 	}
 
 	return nil
