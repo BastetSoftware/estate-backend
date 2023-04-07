@@ -110,7 +110,7 @@ func Listen(address string, handler RequestHandler) error {
 	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-channel
-		err := os.Remove(address)
+		// err := os.Remove(address)
 		if err != nil {
 			log.Fatalf("unable to remove the socket: %v", err)
 		}
