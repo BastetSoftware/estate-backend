@@ -1,23 +1,18 @@
 create table users
 (
-    id         int auto_increment primary key,
-    login      varchar(256) not null unique,
-    pass_hash  binary(60)   not null,
-    first_name varchar(256) not null,
-    last_name  varchar(256) not null,
-    patronymic varchar(256) not null
+    id             int auto_increment primary key,
+    login          varchar(256) not null unique,
+    pass_hash      binary(60)   not null,
+    first_name     varchar(256) not null,
+    last_name      varchar(256) not null,
+    patronymic     varchar(256) not null,
+    manages_groups bool         not null
 );
 
 create table grps
 (
     id int auto_increment primary key,
     name varchar(256) not null unique
-);
-
-create table group_managers
-(
-    uid int primary key,
-    foreign key (uid) references users (id)
 );
 
 create table user_group_rel

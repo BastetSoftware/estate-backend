@@ -11,12 +11,13 @@ var ErrUserExists = errors.New("user already exists")
 var ErrNoUser = errors.New("user does not exist")
 
 type UserInfo struct {
-	Id         int64
-	Login      string
-	PassHash   []byte
-	FirstName  string
-	LastName   string
-	Patronymic string
+	Id            int64
+	Login         string
+	PassHash      []byte
+	FirstName     string
+	LastName      string
+	Patronymic    string
+	ManagesGroups bool
 }
 
 func (u UserInfo) Format() string {
@@ -43,9 +44,10 @@ func (u UserInfo) Register(db *sql.DB) error {
 }
 
 func RegisterUser(db *sql.DB, u *UserInfo) (int64, error) {
+	q := "INSERT INTO users (login, pass_hash, first_name, last_name, patronymic, manages_groups) VALUES (?,?,?,?,?,?);"
 	result, err := db.Exec(
-		"INSERT INTO users (login, pass_hash, first_name, last_name, patronymic) VALUES (?,?,?,?,?);",
-		u.Login, u.PassHash, u.FirstName, u.LastName, u.Patronymic,
+		q,
+		u.Login, u.PassHash, u.FirstName, u.LastName, u.Patronymic, u.ManagesGroups,
 	)
 	if err != nil {
 		switch e := err.(type) {
@@ -76,6 +78,7 @@ func GetUserInfo(db *sql.DB, id int64) (*UserInfo, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.Patronymic,
+		&user.ManagesGroups,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNoUser
@@ -98,6 +101,7 @@ func FindUserInfo(db *sql.DB, login string) (*UserInfo, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.Patronymic,
+		&user.ManagesGroups,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNoUser

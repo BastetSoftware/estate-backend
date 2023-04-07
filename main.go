@@ -55,12 +55,13 @@ func handleFUserCreate(r *api.Request) (*api.Response, error) {
 		args.Patronymic = "-"
 	}
 	userInfo := database.UserInfo{
-		Id:         0,
-		Login:      args.Login,
-		PassHash:   passHash,
-		FirstName:  args.FirstName,
-		LastName:   args.LastName,
-		Patronymic: args.Patronymic,
+		Id:            0,
+		Login:         args.Login,
+		PassHash:      passHash,
+		FirstName:     args.FirstName,
+		LastName:      args.LastName,
+		Patronymic:    args.Patronymic,
+		ManagesGroups: false,
 	}
 	err = userInfo.Register(db)
 	switch err {
