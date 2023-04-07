@@ -18,7 +18,7 @@ create table roles
     perm_object_create bool not null,
     perm_object_remove bool not null,
     perm_object_modify bool not null,
-    perm_object_view   bool not null,
+    perm_object_browse bool not null,
 
     perm_user_remove bool not null,
     perm_user_assign bool not null
@@ -92,7 +92,7 @@ insert into roles
     perm_object_create,
     perm_object_remove,
     perm_object_modify,
-    perm_object_view,
+    perm_object_browse,
 
     perm_user_remove,
     perm_user_assign
@@ -115,7 +115,7 @@ insert into roles
     perm_object_create,
     perm_object_remove,
     perm_object_modify,
-    perm_object_view,
+    perm_object_browse,
 
     perm_user_remove,
     perm_user_assign
