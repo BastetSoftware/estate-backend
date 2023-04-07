@@ -217,6 +217,24 @@ func handleFUserEdit(r *api.Request) (*api.Response, error) {
 		}
 	}
 
+	var names = [2]*string{args.FirstName, args.LastName}
+	for i, n := range names {
+		if n == nil {
+			continue
+		}
+
+		err = database.UserChangeName(db, uid, i, *n)
+		switch err {
+		case nil:
+			break
+		case database.ErrNoUser:
+			return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		default:
+			fmt.Println(err)
+			return &api.Response{Code: api.EUnknown, Data: nil}, nil
+		}
+	}
+
 	return &api.Response{Code: 0, Data: nil}, nil
 }
 

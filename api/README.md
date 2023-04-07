@@ -156,11 +156,13 @@ Func = 5
 
 ##### Request args
 
-| argument | type    | description                      |
-|----------|---------|----------------------------------|
-| Token    | string  | session token                    |
-| Login    | *string | new login (null if unchanged)    |
-| Password | *string | new password (null if unchanged) |
+| argument  | type    | description                        |
+|-----------|---------|------------------------------------|
+| Token     | string  | session token                      |
+| Login     | *string | new login (null if unchanged)      |
+| Password  | *string | new password (null if unchanged)   |
+| FirstName | *string | new first name (null if unchanged) |
+| LastName  | *string | new last name (null if unchanged)  |
 
 ##### Response data
 

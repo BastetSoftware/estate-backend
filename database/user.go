@@ -145,3 +145,21 @@ func UserChangePasswordHash(db *sql.DB, id int64, pass_hash []byte) error {
 
 	return nil
 }
+
+func UserChangeName(db *sql.DB, id int64, nameType int, newName string) error {
+	var nameTypes = [2]string{"first_name", "last_name"}
+	if nameType >= len(nameTypes) || nameType < 0 {
+		return fmt.Errorf("invalid name type")
+	}
+
+	_, err := db.Exec("UPDATE users SET "+nameTypes[nameType]+"=? WHERE id=?;", newName, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return ErrNoUser
+		} else {
+			return err
+		}
+	}
+
+	return nil
+}
