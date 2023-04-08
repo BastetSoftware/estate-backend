@@ -51,9 +51,6 @@ func handleFUserCreate(r *api.Request) (*api.Response, error) {
 		return &api.Response{Code: api.EUnknown, Data: nil}, err
 	}
 
-	if args.Patronymic == "" {
-		args.Patronymic = "-"
-	}
 	userInfo := database.UserInfo{
 		Id:            0,
 		Login:         args.Login,
