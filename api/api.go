@@ -73,7 +73,6 @@ type ArgsFUserInfo struct {
 	Login string // login
 }
 
-// TODO: add role
 type RespFUserInfo struct {
 	Login      string
 	FirstName  string

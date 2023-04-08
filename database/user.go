@@ -131,7 +131,7 @@ func UserChangeLogin(db *sql.DB, id int64, newLogin string) error {
 	case err != nil:
 		return err
 	case n == 0:
-		return ErrNoUser
+		//return ErrNoUser
 	}
 
 	return nil
@@ -148,7 +148,7 @@ func UserChangePasswordHash(db *sql.DB, id int64, pass_hash []byte) error {
 	case err != nil:
 		return err
 	case n == 0:
-		return ErrNoUser
+		//return ErrNoUser
 	}
 
 	return nil
@@ -170,7 +170,7 @@ func UserChangeName(db *sql.DB, id int64, nameType int, newName string) error {
 	case err != nil:
 		return err
 	case n == 0:
-		return ErrNoUser
+		//return ErrNoUser
 	}
 
 	return nil
@@ -187,7 +187,7 @@ func UserSetManagesGroups(db *sql.DB, id int64, managesGroups bool) error {
 	case err != nil:
 		return err
 	case n == 0:
-		return ErrNoUser
+		//return ErrNoUser
 	}
 
 	return nil

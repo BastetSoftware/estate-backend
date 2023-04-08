@@ -230,7 +230,6 @@ func handleFUserEdit(r *api.Request) (*api.Response, error) {
 		case database.ErrNoUser:
 			return &api.Response{Code: api.ENoEntry, Data: nil}, nil
 		default:
-			fmt.Println(err)
 			return &api.Response{Code: api.EUnknown, Data: nil}, err
 		}
 	}
