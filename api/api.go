@@ -23,8 +23,7 @@ const (
 
 	FGroupCreate
 	FGroupRemove
-	FGroupAddUser
-	FGroupRemoveUser
+	FGroupAddRemoveUser
 
 	FNull uint = iota
 )
@@ -36,7 +35,6 @@ type Request struct {
 
 type Response struct {
 	Code uint8
-	Data []byte
 }
 
 /* FUserCreate */
@@ -57,6 +55,7 @@ type ArgsFLogIn struct {
 }
 
 type RespFLogIn struct {
+	Code  uint8
 	Token string
 }
 
@@ -74,6 +73,7 @@ type ArgsFUserInfo struct {
 }
 
 type RespFUserInfo struct {
+	Code       uint8
 	Login      string
 	FirstName  string
 	LastName   string
@@ -107,13 +107,13 @@ type ArgsFGroupCreateRemove struct {
 	Name  string
 }
 
-/* FGroupAddUser */
-/* FGroupRemoveUser */
+/* FGroupAddRemoveUser */
 
 type ArgsFGroupAddRemoveUser struct {
-	Token string
-	Group string
-	Login string
+	Token  string
+	Group  string
+	Login  string
+	Action bool // true - add, false - remove
 }
 
 const (
@@ -129,7 +129,7 @@ const (
 )
 
 // TODO: remove conn (?)
-type RequestHandler func(r *Request) (*Response, error)
+type RequestHandler func(r []byte) (interface{}, error)
 
 func Listen(address string, handler RequestHandler) error {
 	socket, err := net.Listen("tcp4", address)
@@ -173,19 +173,19 @@ func Listen(address string, handler RequestHandler) error {
 			}
 
 			// handle the request
-			response, err := handler(&msg)
+			//response, err := handler(&msg)
 			if err != nil {
 				log.Println(err)
 			}
 
 			// serialize the response
-			data, err := msgpack.Marshal(response)
+			//data, err := msgpack.Marshal(response)
 			if err != nil {
 				log.Fatal(err)
 			}
 
 			// send the response
-			_, err = conn.Write(data)
+			//_, err = conn.Write(data)
 			if err != nil {
 				log.Fatal(err)
 			}
