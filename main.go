@@ -238,15 +238,9 @@ func handleFUserEdit(r *api.Request) (*api.Response, error) {
 	return &api.Response{Code: 0, Data: nil}, nil
 }
 
-func handleFGroupCreate(r *api.Request) (*api.Response, error) {
-	// parse args
-	var args api.ArgsFGroupCreateRemove
-	err := CustomUnmarshal(r.Args, &args)
-	if err != nil {
-		return &api.Response{Code: api.EArgsInval, Data: nil}, err
-	}
-
-	session, err := database.VerifySession(db, []byte(args.Token))
+// verifyManagesGroups: check that user can manage groups
+func verifyManagesGroups(token string) (*api.Response, error) {
+	session, err := database.VerifySession(db, []byte(token))
 	switch err {
 	case nil:
 		break
@@ -268,6 +262,23 @@ func handleFGroupCreate(r *api.Request) (*api.Response, error) {
 
 	if !userinfo.ManagesGroups {
 		return &api.Response{Code: api.EAccessDenied, Data: nil}, nil
+	}
+
+	return nil, nil
+}
+
+func handleFGroupCreate(r *api.Request) (*api.Response, error) {
+	// parse args
+	var args api.ArgsFGroupCreateRemove
+	err := CustomUnmarshal(r.Args, &args)
+	if err != nil {
+		return &api.Response{Code: api.EArgsInval, Data: nil}, err
+	}
+
+	// check that user can manage groups
+	resp, err := verifyManagesGroups(args.Token)
+	if resp != nil {
+		return resp, err
 	}
 
 	_, err = database.CreateGroup(db, args.Name)
@@ -291,28 +302,10 @@ func handleFGroupRemove(r *api.Request) (*api.Response, error) {
 		return &api.Response{Code: api.EArgsInval, Data: nil}, err
 	}
 
-	session, err := database.VerifySession(db, []byte(args.Token))
-	switch err {
-	case nil:
-		break
-	case database.ErrNotLoggedIn:
-		return &api.Response{Code: api.ENotLoggedIn, Data: nil}, nil
-	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
-	}
-
-	userinfo, err := database.GetUserInfo(db, session.User)
-	switch err {
-	case nil:
-		break
-	case database.ErrNoUser:
-		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
-	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
-	}
-
-	if !userinfo.ManagesGroups {
-		return &api.Response{Code: api.EAccessDenied, Data: nil}, nil
+	// check that user can manage groups
+	resp, err := verifyManagesGroups(args.Token)
+	if resp != nil {
+		return resp, err
 	}
 
 	group, err := database.FindGroup(db, args.Name)
