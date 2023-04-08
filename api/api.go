@@ -19,6 +19,12 @@ const (
 	FLogOut
 	FUserInfo
 	FUserEdit
+	FUserSetManagesGroups
+
+	FGroupCreate
+	FGroupRemove
+	FGroupAddUser
+	FGroupRemoveUser
 
 	FNull uint = iota
 )
@@ -67,7 +73,6 @@ type ArgsFUserInfo struct {
 	Login string // login
 }
 
-// TODO: add role
 type RespFUserInfo struct {
 	Login      string
 	FirstName  string
@@ -86,11 +91,37 @@ type ArgsFUserEdit struct {
 	Patronymic *string
 }
 
+/* FUserSetManagesGroups */
+
+type ArgsFUserSetManagesGroups struct {
+	Token string
+	Login string
+	Value bool
+}
+
+/* FGroupCreate */
+/* FGroupRemove */
+
+type ArgsFGroupCreateRemove struct {
+	Token string
+	Name  string
+}
+
+/* FGroupAddUser */
+/* FGroupRemoveUser */
+
+type ArgsFGroupAddRemoveUser struct {
+	Token string
+	Group string
+	Login string
+}
+
 const (
 	EExists uint8 = iota + 1 // record exists
 	ENoEntry
 	EPassWrong
 	ENotLoggedIn
+	EAccessDenied
 
 	EArgsInval uint8 = 253 // invalid arguments
 	ENoFun     uint8 = 254 // function does not exist
@@ -110,7 +141,7 @@ func Listen(address string, handler RequestHandler) error {
 	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-channel
-		err := os.Remove(address)
+		// err := os.Remove(address)
 		if err != nil {
 			log.Fatalf("unable to remove the socket: %v", err)
 		}
@@ -144,7 +175,7 @@ func Listen(address string, handler RequestHandler) error {
 			// handle the request
 			response, err := handler(&msg)
 			if err != nil {
-				log.Fatal(err)
+				log.Println(err)
 			}
 
 			// serialize the response

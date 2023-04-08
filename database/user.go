@@ -11,13 +11,13 @@ var ErrUserExists = errors.New("user already exists")
 var ErrNoUser = errors.New("user does not exist")
 
 type UserInfo struct {
-	Id         int64
-	Login      string
-	PassHash   []byte
-	FirstName  string
-	LastName   string
-	Patronymic string
-	Role       int64
+	Id            int64
+	Login         string
+	PassHash      []byte
+	FirstName     string
+	LastName      string
+	Patronymic    string
+	ManagesGroups bool
 }
 
 func (u UserInfo) Format() string {
@@ -33,8 +33,7 @@ func (u UserInfo) Format() string {
 		u.PassHash, " ",
 		u.FirstName, " ",
 		u.LastName, " ",
-		patronymic, " ",
-		u.Role,
+		patronymic,
 	)
 }
 
@@ -45,9 +44,10 @@ func (u UserInfo) Register(db *sql.DB) error {
 }
 
 func RegisterUser(db *sql.DB, u *UserInfo) (int64, error) {
+	q := "INSERT INTO users (login, pass_hash, first_name, last_name, patronymic, manages_groups) VALUES (?,?,?,?,?,?);"
 	result, err := db.Exec(
-		"INSERT INTO users (login, pass_hash, first_name, last_name, patronymic, role) VALUES (?,?,?,?,?,?);",
-		u.Login, u.PassHash, u.FirstName, u.LastName, u.Patronymic, u.Role,
+		q,
+		u.Login, u.PassHash, u.FirstName, u.LastName, u.Patronymic, u.ManagesGroups,
 	)
 	if err != nil {
 		switch e := err.(type) {
@@ -78,7 +78,7 @@ func GetUserInfo(db *sql.DB, id int64) (*UserInfo, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.Patronymic,
-		&user.Role,
+		&user.ManagesGroups,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNoUser
@@ -101,7 +101,7 @@ func FindUserInfo(db *sql.DB, login string) (*UserInfo, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.Patronymic,
-		&user.Role,
+		&user.ManagesGroups,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNoUser
@@ -114,7 +114,7 @@ func FindUserInfo(db *sql.DB, login string) (*UserInfo, error) {
 }
 
 func UserChangeLogin(db *sql.DB, id int64, newLogin string) error {
-	_, err := db.Exec("UPDATE users SET login=? WHERE id=?;", newLogin, id)
+	result, err := db.Exec("UPDATE users SET login=? WHERE id=?;", newLogin, id)
 	switch e := err.(type) {
 	case nil:
 		break
@@ -123,24 +123,32 @@ func UserChangeLogin(db *sql.DB, id int64, newLogin string) error {
 			return ErrUserExists
 		}
 	default:
-		if err == sql.ErrNoRows {
-			return ErrNoUser
-		} else {
-			return err
-		}
+		return err
+	}
+
+	n, err := result.RowsAffected()
+	switch {
+	case err != nil:
+		return err
+	case n == 0:
+		//return ErrNoUser
 	}
 
 	return nil
 }
 
 func UserChangePasswordHash(db *sql.DB, id int64, pass_hash []byte) error {
-	_, err := db.Exec("UPDATE users SET pass_hash=? WHERE id=?;", pass_hash, id)
+	result, err := db.Exec("UPDATE users SET pass_hash=? WHERE id=?;", pass_hash, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return ErrNoUser
-		} else {
-			return err
-		}
+		return err
+	}
+
+	n, err := result.RowsAffected()
+	switch {
+	case err != nil:
+		return err
+	case n == 0:
+		//return ErrNoUser
 	}
 
 	return nil
@@ -152,13 +160,34 @@ func UserChangeName(db *sql.DB, id int64, nameType int, newName string) error {
 		return fmt.Errorf("invalid name type")
 	}
 
-	_, err := db.Exec("UPDATE users SET "+nameTypes[nameType]+"=? WHERE id=?;", newName, id)
+	result, err := db.Exec("UPDATE users SET "+nameTypes[nameType]+"=? WHERE id=?;", newName, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return ErrNoUser
-		} else {
-			return err
-		}
+		return err
+	}
+
+	n, err := result.RowsAffected()
+	switch {
+	case err != nil:
+		return err
+	case n == 0:
+		//return ErrNoUser
+	}
+
+	return nil
+}
+
+func UserSetManagesGroups(db *sql.DB, id int64, managesGroups bool) error {
+	result, err := db.Exec("UPDATE users SET manages_groups=? WHERE id=?;", managesGroups, id)
+	if err != nil {
+		return err
+	}
+
+	n, err := result.RowsAffected()
+	switch {
+	case err != nil:
+		return err
+	case n == 0:
+		//return ErrNoUser
 	}
 
 	return nil

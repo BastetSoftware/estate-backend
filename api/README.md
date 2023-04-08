@@ -178,3 +178,137 @@ No specific response data
 | ENoEntry     | user does not exist                                         |
 | EExists      | user with this new login already exists                     |
 | EUnknown     | unknown error                                               |
+
+#### Give group management permissions
+
+Func = 6
+
+##### Request args
+
+| argument | type   | description                                 |
+|----------|--------|---------------------------------------------|
+| Token    | string | session token                               |
+| Login    | string | login of the target user                    |
+| Value    | bool   | permission (true to grant, false to revoke) |
+
+##### Response data
+
+No specific response data
+
+##### Possible errors
+
+| error         | description                                                 |
+|---------------|-------------------------------------------------------------|
+| EArgsInval    | invalid request arguments                                   |
+| ENotLoggedIn  | request sender is not logged in or session token is invalid |
+| ENoEntry      | user does not exist                                         |
+| EAccessDenied | user has no rights to grant this permission                 |
+| EUnknown      | unknown error                                               |
+
+### Groups manipulation
+
+#### Create group
+
+Func = 7
+
+##### Request args
+
+| argument | type   | description   |
+|----------|--------|---------------|
+| Token    | string | session token |
+| Name     | string | group name    |
+
+##### Response data
+
+No specific response data
+
+##### Possible errors
+
+| error         | description                                                 |
+|---------------|-------------------------------------------------------------|
+| EArgsInval    | invalid request arguments                                   |
+| ENotLoggedIn  | request sender is not logged in or session token is invalid |
+| ENoEntry      | request sending user does not exist                         |
+| EAccessDenied | user has no rights to manage groups                         |
+| EExists       | group already exists                                        |
+| EUnknown      | unknown error                                               |
+
+#### Remove group
+
+Func = 8
+
+##### Request args
+
+| argument | type   | description   |
+|----------|--------|---------------|
+| Token    | string | session token |
+| Name     | string | group name    |
+
+##### Response data
+
+No specific response data
+
+##### Possible errors
+
+| error         | description                                                 |
+|---------------|-------------------------------------------------------------|
+| EArgsInval    | invalid request arguments                                   |
+| ENotLoggedIn  | request sender is not logged in or session token is invalid |
+| ENoEntry      | group does not exist                                        |
+| ENoEntry (2)  | request sending user does not exist                         |
+| EAccessDenied | user has no rights to manage groups                         |
+| EUnknown      | unknown error                                               |
+
+#### Add user to group
+
+Func = 9
+
+##### Request args
+
+| argument | type   | description   |
+|----------|--------|---------------|
+| Token    | string | session token |
+| Group    | string | group name    |
+| Login    | string | user login    |
+
+##### Response data
+
+No specific response data
+
+##### Possible errors
+
+| error         | description                                                 |
+|---------------|-------------------------------------------------------------|
+| EArgsInval    | invalid request arguments                                   |
+| ENotLoggedIn  | request sender is not logged in or session token is invalid |
+| ENoEntry      | group or user does not exist                                |
+| EAccessDenied | user has no rights to manage groups                         |
+| EExists       | user is already in group                                    |
+| EUnknown      | unknown error                                               |
+
+#### Remove user from group
+
+Func = 10
+
+##### Request args
+
+| argument | type   | description   |
+|----------|--------|---------------|
+| Token    | string | session token |
+| Group    | string | group name    |
+| Login    | string | user login    |
+
+##### Response data
+
+No specific response data
+
+##### Possible errors
+
+| error         | description                                                 |
+|---------------|-------------------------------------------------------------|
+| EArgsInval    | invalid request arguments                                   |
+| ENotLoggedIn  | request sender is not logged in or session token is invalid |
+| ENoEntry      | group or user does not exist                                |
+| EAccessDenied | user has no rights to manage groups                         |
+| EUnknown      | unknown error                                               |
+
