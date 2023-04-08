@@ -19,6 +19,7 @@ const (
 	FLogOut
 	FUserInfo
 	FUserEdit
+	FUserSetManagesGroups
 
 	FGroupCreate
 	FGroupRemove
@@ -89,6 +90,14 @@ type ArgsFUserEdit struct {
 	FirstName  *string
 	LastName   *string
 	Patronymic *string
+}
+
+/* FUserSetManagesGroups */
+
+type ArgsFUserSetManagesGroups struct {
+	Token string
+	Login string
+	Value bool
 }
 
 /* FGroupCreate */

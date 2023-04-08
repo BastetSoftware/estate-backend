@@ -114,7 +114,7 @@ func FindUserInfo(db *sql.DB, login string) (*UserInfo, error) {
 }
 
 func UserChangeLogin(db *sql.DB, id int64, newLogin string) error {
-	_, err := db.Exec("UPDATE users SET login=? WHERE id=?;", newLogin, id)
+	result, err := db.Exec("UPDATE users SET login=? WHERE id=?;", newLogin, id)
 	switch e := err.(type) {
 	case nil:
 		break
@@ -123,24 +123,32 @@ func UserChangeLogin(db *sql.DB, id int64, newLogin string) error {
 			return ErrUserExists
 		}
 	default:
-		if err == sql.ErrNoRows {
-			return ErrNoUser
-		} else {
-			return err
-		}
+		return err
+	}
+
+	n, err := result.RowsAffected()
+	switch {
+	case err != nil:
+		return err
+	case n == 0:
+		return ErrNoUser
 	}
 
 	return nil
 }
 
 func UserChangePasswordHash(db *sql.DB, id int64, pass_hash []byte) error {
-	_, err := db.Exec("UPDATE users SET pass_hash=? WHERE id=?;", pass_hash, id)
+	result, err := db.Exec("UPDATE users SET pass_hash=? WHERE id=?;", pass_hash, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return ErrNoUser
-		} else {
-			return err
-		}
+		return err
+	}
+
+	n, err := result.RowsAffected()
+	switch {
+	case err != nil:
+		return err
+	case n == 0:
+		return ErrNoUser
 	}
 
 	return nil
@@ -152,13 +160,34 @@ func UserChangeName(db *sql.DB, id int64, nameType int, newName string) error {
 		return fmt.Errorf("invalid name type")
 	}
 
-	_, err := db.Exec("UPDATE users SET "+nameTypes[nameType]+"=? WHERE id=?;", newName, id)
+	result, err := db.Exec("UPDATE users SET "+nameTypes[nameType]+"=? WHERE id=?;", newName, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return ErrNoUser
-		} else {
-			return err
-		}
+		return err
+	}
+
+	n, err := result.RowsAffected()
+	switch {
+	case err != nil:
+		return err
+	case n == 0:
+		return ErrNoUser
+	}
+
+	return nil
+}
+
+func UserSetManagesGroups(db *sql.DB, id int64, managesGroups bool) error {
+	result, err := db.Exec("UPDATE users SET manages_groups=? WHERE id=?;", managesGroups, id)
+	if err != nil {
+		return err
+	}
+
+	n, err := result.RowsAffected()
+	switch {
+	case err != nil:
+		return err
+	case n == 0:
+		return ErrNoUser
 	}
 
 	return nil

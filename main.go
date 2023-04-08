@@ -238,6 +238,44 @@ func handleFUserEdit(r *api.Request) (*api.Response, error) {
 	return &api.Response{Code: 0, Data: nil}, nil
 }
 
+func handleFUserSetManagesGroups(r *api.Request) (*api.Response, error) {
+	// parse args
+	var args api.ArgsFUserSetManagesGroups
+	err := CustomUnmarshal(r.Args, &args)
+	if err != nil {
+		return &api.Response{Code: api.EArgsInval, Data: nil}, err
+	}
+
+	// check that user can manage groups
+	resp, err := verifyManagesGroups(args.Token)
+	if resp != nil {
+		return resp, err
+	}
+
+	// find target user
+	userinfo, err := database.FindUserInfo(db, args.Login)
+	switch err {
+	case nil:
+		break
+	case database.ErrNoUser:
+		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, err
+	}
+
+	err = database.UserSetManagesGroups(db, userinfo.Id, args.Value)
+	switch err {
+	case nil:
+		break
+	case database.ErrNoUser:
+		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, err
+	}
+
+	return &api.Response{Code: 0, Data: nil}, nil
+}
+
 // verifyManagesGroups: check that user can manage groups
 func verifyManagesGroups(token string) (*api.Response, error) {
 	session, err := database.VerifySession(db, []byte(token))
@@ -410,6 +448,7 @@ func main() {
 	apiFHandlers[api.FLogOut] = handleFLogOut
 	apiFHandlers[api.FUserInfo] = handleFUserInfo
 	apiFHandlers[api.FUserEdit] = handleFUserEdit
+	apiFHandlers[api.FUserSetManagesGroups] = handleFUserSetManagesGroups
 
 	apiFHandlers[api.FGroupCreate] = handleFGroupCreate
 	apiFHandlers[api.FGroupRemove] = handleFGroupRemove
