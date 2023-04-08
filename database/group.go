@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -132,9 +133,38 @@ func GroupRemoveUser(db *sql.DB, uid int64, gid int64) error {
 
 func IsUserInGroup(db *sql.DB, uid int64, gid int64) bool {
 	row := db.QueryRow(
-		"SELECT * FROM user_group_rel WHERE uid=? OR (gid=?)",
+		"SELECT * FROM user_group_rel WHERE uid=? OR gid=?",
 		uid, gid,
 	)
 
 	return row.Err() == nil
+}
+
+type ElementsToList int
+
+const (
+	GroupListUsers ElementsToList = 0
+	UserListGroups ElementsToList = 1
+)
+
+func ListGroupsOrUsers(db *sql.DB, toList ElementsToList, id int64) ([]int64, error) {
+	id1, id2 := [2]string{"uid", "gid"}[toList], [2]string{"gid", "uid"}[toList]
+	rows, err := db.Query(
+		fmt.Sprintf("SELECT %s FROM user_group_rel WHERE %s=?;", id1, id2),
+		id,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var uids []int64
+	for rows.Next() {
+		var uid int64
+		if err := rows.Scan(&uid); err != nil {
+			return nil, err
+		}
+		uids = append(uids, uid)
+	}
+
+	return uids, nil
 }
