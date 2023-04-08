@@ -2,17 +2,14 @@
 
 ## Request format
 
-| field | type    | description                 |
-|-------|---------|-----------------------------|
-| Func  | uint8   | function number             |
-| Args  | uint8[] | function-specific arguments |
+A POST request to api/function_name with binary msgpack-encoded arguments in the body.
 
 ## Response format
 
-| field | type    | description                                   |
-|-------|---------|-----------------------------------------------|
-| Code  | uint8   | 0 if no errors occurred, error code otherwise |
-| Data  | uint8[] | function-specific return values               |
+| field | type  | description                                    |
+|-------|-------|------------------------------------------------|
+| Code  | uint8 | 0 if no errors occurred, error code otherwise  |
+| ...   | ...   | function-specific return values (if no errors) |
 
 ## Error codes
 
@@ -30,9 +27,7 @@
 
 ### Service
 
-#### Ping
-
-Func = 0
+#### ping
 
 ##### Request args
 
@@ -48,9 +43,7 @@ Always successful
 
 ### User data manipulation
 
-#### Create user
-
-Func = 1
+#### user_create
 
 ##### Request args
 
@@ -74,9 +67,7 @@ No specific response data
 | EExists    | user with this login already exists |
 | EUnknown   | unknown error                       |
 
-#### Log in
-
-Func = 2
+#### user_log_in
 
 ##### Request args
 
@@ -100,9 +91,7 @@ Func = 2
 | EPassWrong | wrong password            |
 | EUnknown   | unknown error             |
 
-#### Log out
-
-Func = 3
+#### user_log_out
 
 ##### Request args
 
@@ -121,9 +110,7 @@ No specific response data
 | EArgsInval | invalid request arguments |
 | EUnknown   | unknown error             |
 
-#### Get user info
-
-Func = 4
+#### user_get_info
 
 ##### Request args
 
@@ -150,9 +137,7 @@ Func = 4
 | ENoEntry     | target user does not exist                                  |
 | EUnknown     | unknown error                                               |
 
-#### Edit user info
-
-Func = 5
+#### user_edit
 
 ##### Request args
 
@@ -179,9 +164,7 @@ No specific response data
 | EExists      | user with this new login already exists                     |
 | EUnknown     | unknown error                                               |
 
-#### Give group management permissions
-
-Func = 6
+#### user_set_manages_groups
 
 ##### Request args
 
@@ -207,9 +190,7 @@ No specific response data
 
 ### Groups manipulation
 
-#### Create group
-
-Func = 7
+#### group_create
 
 ##### Request args
 
@@ -233,9 +214,7 @@ No specific response data
 | EExists       | group already exists                                        |
 | EUnknown      | unknown error                                               |
 
-#### Remove group
-
-Func = 8
+#### group_remove
 
 ##### Request args
 
@@ -259,17 +238,18 @@ No specific response data
 | EAccessDenied | user has no rights to manage groups                         |
 | EUnknown      | unknown error                                               |
 
-#### Add user to group
+#### group_add_remove_user
 
-Func = 9
+Add or remove a user from a group
 
 ##### Request args
 
-| argument | type   | description   |
-|----------|--------|---------------|
-| Token    | string | session token |
-| Group    | string | group name    |
-| Login    | string | user login    |
+| argument | type   | description                |
+|----------|--------|----------------------------|
+| Token    | string | session token              |
+| Group    | string | group name                 |
+| Login    | string | user login                 |
+| Action   | bool   | true - add, false - remove |
 
 ##### Response data
 
@@ -285,30 +265,3 @@ No specific response data
 | EAccessDenied | user has no rights to manage groups                         |
 | EExists       | user is already in group                                    |
 | EUnknown      | unknown error                                               |
-
-#### Remove user from group
-
-Func = 10
-
-##### Request args
-
-| argument | type   | description   |
-|----------|--------|---------------|
-| Token    | string | session token |
-| Group    | string | group name    |
-| Login    | string | user login    |
-
-##### Response data
-
-No specific response data
-
-##### Possible errors
-
-| error         | description                                                 |
-|---------------|-------------------------------------------------------------|
-| EArgsInval    | invalid request arguments                                   |
-| ENotLoggedIn  | request sender is not logged in or session token is invalid |
-| ENoEntry      | group or user does not exist                                |
-| EAccessDenied | user has no rights to manage groups                         |
-| EUnknown      | unknown error                                               |
-

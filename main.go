@@ -5,15 +5,55 @@ import (
 	"BastetSoftware/backend/database"
 	"bytes"
 	"database/sql"
-	"fmt"
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/bcrypt"
+	"io"
 	"log"
 	"net/http"
 )
 
-func rootHandler(w http.ResponseWriter, r *http.Request) {
-	_, _ = fmt.Fprint(w, "<h1>Homepage</h1>")
+func writeResponse(w http.ResponseWriter, v interface{}) error {
+	data, err := msgpack.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(data)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func apiHandler(w http.ResponseWriter, r *http.Request) {
+	var buf []byte
+	var n int
+	handler := apiFHandlers[r.URL.Path[len("/api/"):]]
+	if handler == nil {
+		// unknown API function, no arguments
+		handler = unknownFPlug
+		buf = nil
+		n = 0
+	} else {
+		// valid API function, read request body
+		buf = make([]byte, 4096)
+		var err error
+		n, err = r.Body.Read(buf)
+		if err != nil && err != io.EOF {
+			log.Fatal(err)
+		}
+	}
+
+	response, err := handler(buf[:n])
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = writeResponse(w, response)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 var db *sql.DB // TODO: make local
@@ -30,25 +70,25 @@ func CustomUnmarshal(data []byte, v interface{}) error {
 	return err
 }
 
-func handleFReserved(r *api.Request) (*api.Response, error) {
-	return &api.Response{Code: api.ENoFun, Data: nil}, nil
+func unknownFPlug(_ []byte) (interface{}, error) {
+	return api.Response{Code: api.ENoFun}, nil
 }
 
-func handleFPing(r *api.Request) (*api.Response, error) {
-	return &api.Response{Code: 0, Data: nil}, nil
+func handleFPing(_ []byte) (interface{}, error) {
+	return api.Response{Code: 0}, nil
 }
 
-func handleFUserCreate(r *api.Request) (*api.Response, error) {
+func handleFUserCreate(r []byte) (interface{}, error) {
 	// parse args
 	var args api.ArgsFUserCreate
-	err := CustomUnmarshal(r.Args, &args)
+	err := CustomUnmarshal(r, &args)
 	if err != nil {
-		return &api.Response{Code: api.EArgsInval, Data: nil}, err
+		return api.Response{Code: api.EArgsInval}, err
 	}
 
 	passHash, err := bcrypt.GenerateFromPassword([]byte(args.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
 	userInfo := database.UserInfo{
@@ -65,21 +105,21 @@ func handleFUserCreate(r *api.Request) (*api.Response, error) {
 	case nil:
 		break
 	case database.ErrUserExists:
-		return &api.Response{Code: api.EExists, Data: nil}, nil
+		return api.Response{Code: api.EExists}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
 	// success
-	return &api.Response{Code: 0, Data: nil}, nil
+	return api.Response{Code: 0}, nil
 }
 
-func handleFLogIn(r *api.Request) (*api.Response, error) {
+func handleFLogIn(r []byte) (interface{}, error) {
 	// parse args
 	var args api.ArgsFLogIn
-	err := CustomUnmarshal(r.Args, &args)
+	err := CustomUnmarshal(r, &args)
 	if err != nil {
-		return &api.Response{Code: api.EArgsInval, Data: nil}, err
+		return api.Response{Code: api.EArgsInval}, err
 	}
 
 	session, err := database.OpenSession(db, args.Login, args.Password)
@@ -87,47 +127,38 @@ func handleFLogIn(r *api.Request) (*api.Response, error) {
 	case nil:
 		break
 	case database.ErrNoUser:
-		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		return api.Response{Code: api.ENoEntry}, nil
 	case database.ErrPassWrong:
-		return &api.Response{Code: api.EPassWrong, Data: nil}, nil
+		return api.Response{Code: api.EPassWrong}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
-	var resp = api.RespFLogIn{
-		Token: string(session.Token),
-	}
-	data, err := msgpack.Marshal(resp)
-	if err != nil {
-		// TODO: close session
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
-	}
-
-	return &api.Response{Code: 0, Data: data}, nil
+	return api.RespFLogIn{Code: 0, Token: string(session.Token)}, nil
 }
 
-func handleFLogOut(r *api.Request) (*api.Response, error) {
+func handleFLogOut(r []byte) (interface{}, error) {
 	// parse args
 	var args api.ArgsFLogOut
-	err := CustomUnmarshal(r.Args, &args)
+	err := CustomUnmarshal(r, &args)
 	if err != nil {
-		return &api.Response{Code: api.EArgsInval, Data: nil}, err
+		return api.Response{Code: api.EArgsInval}, err
 	}
 
 	err = database.CloseSession(db, []byte(args.Token))
 	if err != nil {
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
-	return &api.Response{Code: 0, Data: nil}, nil
+	return api.Response{Code: 0}, nil
 }
 
-func handleFUserInfo(r *api.Request) (*api.Response, error) {
+func handleFUserInfo(r []byte) (interface{}, error) {
 	// parse args
 	var args api.ArgsFUserInfo
-	err := CustomUnmarshal(r.Args, &args)
+	err := CustomUnmarshal(r, &args)
 	if err != nil {
-		return &api.Response{Code: api.EArgsInval, Data: nil}, err
+		return api.Response{Code: api.EArgsInval}, err
 	}
 
 	_, err = database.VerifySession(db, []byte(args.Token))
@@ -135,9 +166,9 @@ func handleFUserInfo(r *api.Request) (*api.Response, error) {
 	case nil:
 		break
 	case database.ErrNotLoggedIn:
-		return &api.Response{Code: api.ENotLoggedIn, Data: nil}, nil
+		return api.Response{Code: api.ENotLoggedIn}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
 	userinfo, err := database.FindUserInfo(db, args.Login)
@@ -145,31 +176,26 @@ func handleFUserInfo(r *api.Request) (*api.Response, error) {
 	case nil:
 		break
 	case database.ErrNoUser:
-		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		return api.Response{Code: api.ENoEntry}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
-	resp := api.RespFUserInfo{
+	return api.RespFUserInfo{
+		Code:       0,
 		Login:      userinfo.Login,
 		FirstName:  userinfo.FirstName,
 		LastName:   userinfo.LastName,
 		Patronymic: userinfo.Patronymic,
-	}
-	data, err := msgpack.Marshal(resp)
-	if err != nil {
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
-	}
-
-	return &api.Response{Code: 0, Data: data}, nil
+	}, nil
 }
 
-func handleFUserEdit(r *api.Request) (*api.Response, error) {
+func handleFUserEdit(r []byte) (interface{}, error) {
 	// parse args
 	var args api.ArgsFUserEdit
-	err := msgpack.Unmarshal(r.Args, &args)
+	err := msgpack.Unmarshal(r, &args)
 	if err != nil || args.Token == "" {
-		return &api.Response{Code: api.EArgsInval, Data: nil}, err
+		return api.Response{Code: api.EArgsInval}, err
 	}
 
 	session, err := database.VerifySession(db, []byte(args.Token))
@@ -177,9 +203,9 @@ func handleFUserEdit(r *api.Request) (*api.Response, error) {
 	case nil:
 		break
 	case database.ErrNotLoggedIn:
-		return &api.Response{Code: api.ENotLoggedIn, Data: nil}, nil
+		return api.Response{Code: api.ENotLoggedIn}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
 	uid := session.User
@@ -190,27 +216,27 @@ func handleFUserEdit(r *api.Request) (*api.Response, error) {
 		case nil:
 			break
 		case database.ErrNoUser:
-			return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+			return api.Response{Code: api.ENoEntry}, nil
 		case database.ErrUserExists:
-			return &api.Response{Code: api.EExists, Data: nil}, nil
+			return api.Response{Code: api.EExists}, nil
 		default:
-			return &api.Response{Code: api.EUnknown, Data: nil}, err
+			return api.Response{Code: api.EUnknown}, err
 		}
 	}
 
 	if args.Password != nil {
 		passHash, err := bcrypt.GenerateFromPassword([]byte(*args.Password), bcrypt.DefaultCost)
 		if err != nil {
-			return &api.Response{Code: api.EUnknown, Data: nil}, err
+			return api.Response{Code: api.EUnknown}, err
 		}
 		err = database.UserChangePasswordHash(db, uid, passHash)
 		switch err {
 		case nil:
 			break
 		case database.ErrNoUser:
-			return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+			return api.Response{Code: api.ENoEntry}, nil
 		default:
-			return &api.Response{Code: api.EUnknown, Data: nil}, err
+			return api.Response{Code: api.EUnknown}, err
 		}
 	}
 
@@ -225,21 +251,21 @@ func handleFUserEdit(r *api.Request) (*api.Response, error) {
 		case nil:
 			break
 		case database.ErrNoUser:
-			return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+			return api.Response{Code: api.ENoEntry}, nil
 		default:
-			return &api.Response{Code: api.EUnknown, Data: nil}, err
+			return api.Response{Code: api.EUnknown}, err
 		}
 	}
 
-	return &api.Response{Code: 0, Data: nil}, nil
+	return api.Response{Code: 0}, nil
 }
 
-func handleFUserSetManagesGroups(r *api.Request) (*api.Response, error) {
+func handleFUserSetManagesGroups(r []byte) (interface{}, error) {
 	// parse args
 	var args api.ArgsFUserSetManagesGroups
-	err := CustomUnmarshal(r.Args, &args)
+	err := CustomUnmarshal(r, &args)
 	if err != nil {
-		return &api.Response{Code: api.EArgsInval, Data: nil}, err
+		return api.Response{Code: api.EArgsInval}, err
 	}
 
 	// check that user can manage groups
@@ -254,9 +280,9 @@ func handleFUserSetManagesGroups(r *api.Request) (*api.Response, error) {
 	case nil:
 		break
 	case database.ErrNoUser:
-		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		return api.Response{Code: api.ENoEntry}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
 	err = database.UserSetManagesGroups(db, userinfo.Id, args.Value)
@@ -264,24 +290,24 @@ func handleFUserSetManagesGroups(r *api.Request) (*api.Response, error) {
 	case nil:
 		break
 	case database.ErrNoUser:
-		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		return api.Response{Code: api.ENoEntry}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
-	return &api.Response{Code: 0, Data: nil}, nil
+	return api.Response{Code: 0}, nil
 }
 
 // verifyManagesGroups: check that user can manage groups
-func verifyManagesGroups(token string) (*api.Response, error) {
+func verifyManagesGroups(token string) (interface{}, error) {
 	session, err := database.VerifySession(db, []byte(token))
 	switch err {
 	case nil:
 		break
 	case database.ErrNotLoggedIn:
-		return &api.Response{Code: api.ENotLoggedIn, Data: nil}, nil
+		return api.Response{Code: api.ENotLoggedIn}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
 	userinfo, err := database.GetUserInfo(db, session.User)
@@ -289,24 +315,24 @@ func verifyManagesGroups(token string) (*api.Response, error) {
 	case nil:
 		break
 	case database.ErrNoUser:
-		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		return api.Response{Code: api.ENoEntry}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
 	if !userinfo.ManagesGroups {
-		return &api.Response{Code: api.EAccessDenied, Data: nil}, nil
+		return api.Response{Code: api.EAccessDenied}, nil
 	}
 
 	return nil, nil
 }
 
-func handleFGroupCreate(r *api.Request) (*api.Response, error) {
+func handleFGroupCreate(r []byte) (interface{}, error) {
 	// parse args
 	var args api.ArgsFGroupCreateRemove
-	err := CustomUnmarshal(r.Args, &args)
+	err := CustomUnmarshal(r, &args)
 	if err != nil {
-		return &api.Response{Code: api.EArgsInval, Data: nil}, err
+		return api.Response{Code: api.EArgsInval}, err
 	}
 
 	// check that user can manage groups
@@ -320,20 +346,20 @@ func handleFGroupCreate(r *api.Request) (*api.Response, error) {
 	case nil:
 		break
 	case database.ErrGroupExists:
-		return &api.Response{Code: api.EExists, Data: nil}, nil
+		return api.Response{Code: api.EExists}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
-	return &api.Response{Code: 0, Data: nil}, nil
+	return api.Response{Code: 0}, nil
 }
 
-func handleFGroupRemove(r *api.Request) (*api.Response, error) {
+func handleFGroupRemove(r []byte) (interface{}, error) {
 	// parse args
 	var args api.ArgsFGroupCreateRemove
-	err := CustomUnmarshal(r.Args, &args)
+	err := CustomUnmarshal(r, &args)
 	if err != nil {
-		return &api.Response{Code: api.EArgsInval, Data: nil}, err
+		return api.Response{Code: api.EArgsInval}, err
 	}
 
 	// check that user can manage groups
@@ -347,9 +373,9 @@ func handleFGroupRemove(r *api.Request) (*api.Response, error) {
 	case nil:
 		break
 	case database.ErrNoGroup:
-		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		return api.Response{Code: api.ENoEntry}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
 	err = database.RemoveGroup(db, group.Id)
@@ -357,20 +383,20 @@ func handleFGroupRemove(r *api.Request) (*api.Response, error) {
 	case nil:
 		break
 	case database.ErrNoGroup:
-		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		return api.Response{Code: api.ENoEntry}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
-	return &api.Response{Code: 0, Data: nil}, nil
+	return api.Response{Code: 0}, nil
 }
 
-func handleFGroupAddRemoveUser(r *api.Request) (*api.Response, error) {
+func handleFGroupAddRemoveUser(r []byte) (interface{}, error) {
 	// parse args
 	var args api.ArgsFGroupAddRemoveUser
-	err := CustomUnmarshal(r.Args, &args)
+	err := CustomUnmarshal(r, &args)
 	if err != nil {
-		return &api.Response{Code: api.EArgsInval, Data: nil}, err
+		return api.Response{Code: api.EArgsInval}, err
 	}
 
 	// check that user can manage groups
@@ -384,9 +410,9 @@ func handleFGroupAddRemoveUser(r *api.Request) (*api.Response, error) {
 	case nil:
 		break
 	case database.ErrNoGroup:
-		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		return api.Response{Code: api.ENoEntry}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
 	user, err := database.FindUserInfo(db, args.Login)
@@ -394,62 +420,52 @@ func handleFGroupAddRemoveUser(r *api.Request) (*api.Response, error) {
 	case nil:
 		break
 	case database.ErrNoUser:
-		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		return api.Response{Code: api.ENoEntry}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
-	switch r.Func {
-	case api.FGroupAddUser:
+	if args.Action {
 		err = database.GroupAddUser(db, user.Id, group.Id)
-	case api.FGroupRemoveUser:
+	} else {
 		err = database.GroupRemoveUser(db, user.Id, group.Id)
-	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
 	}
 
 	switch err {
 	case nil:
 		break
 	case database.ErrAlreadyInGroup:
-		return &api.Response{Code: api.EExists, Data: nil}, nil
+		return api.Response{Code: api.EExists}, nil
 	case database.ErrNoGroup:
-		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+		return api.Response{Code: api.ENoEntry}, nil
 	default:
-		return &api.Response{Code: api.EUnknown, Data: nil}, err
+		return api.Response{Code: api.EUnknown}, err
 	}
 
-	return &api.Response{Code: 0, Data: nil}, nil
+	return api.Response{Code: 0}, nil
 }
 
-var apiFHandlers [api.FNull]api.RequestHandler
-
-func handleRequest(r *api.Request) (*api.Response, error) {
-	if int(r.Func) >= len(apiFHandlers) {
-		return &api.Response{Code: api.ENoFun, Data: nil}, nil
-	}
-
-	return apiFHandlers[r.Func](r)
-}
+var apiFHandlers map[string]api.RequestHandler
 
 func main() {
 	var err error
 
 	/* setup handlers */
 
-	apiFHandlers[api.FPing] = handleFPing
+	apiFHandlers = make(map[string]api.RequestHandler)
 
-	apiFHandlers[api.FUserCreate] = handleFUserCreate
-	apiFHandlers[api.FLogIn] = handleFLogIn
-	apiFHandlers[api.FLogOut] = handleFLogOut
-	apiFHandlers[api.FUserInfo] = handleFUserInfo
-	apiFHandlers[api.FUserEdit] = handleFUserEdit
-	apiFHandlers[api.FUserSetManagesGroups] = handleFUserSetManagesGroups
+	apiFHandlers["ping"] = handleFPing
 
-	apiFHandlers[api.FGroupCreate] = handleFGroupCreate
-	apiFHandlers[api.FGroupRemove] = handleFGroupRemove
-	apiFHandlers[api.FGroupAddUser] = handleFGroupAddRemoveUser
-	apiFHandlers[api.FGroupRemoveUser] = handleFGroupAddRemoveUser
+	apiFHandlers["user_create"] = handleFUserCreate
+	apiFHandlers["user_log_in"] = handleFLogIn
+	apiFHandlers["user_log_out"] = handleFLogOut
+	apiFHandlers["user_get_info"] = handleFUserInfo
+	apiFHandlers["user_edit"] = handleFUserEdit
+	apiFHandlers["user_set_manages_groups"] = handleFUserSetManagesGroups
+
+	apiFHandlers["group_create"] = handleFGroupCreate
+	apiFHandlers["group_remove"] = handleFGroupRemove
+	apiFHandlers["group_add_remove_user"] = handleFGroupAddRemoveUser
 
 	/* =(setup handlers)= */
 
@@ -458,12 +474,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// err = api.Listen("/tmp/estate.sock", handleRequest)
-	err = api.Listen("localhost:8080", handleRequest)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	//http.HandleFunc("/", rootHandler)
-	//log.Fatal(http.ListenAndServe(":8080", nil))
+	http.HandleFunc("/api/", apiHandler)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
