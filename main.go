@@ -27,13 +27,25 @@ func writeResponse(w http.ResponseWriter, v interface{}) error {
 }
 
 func apiHandler(w http.ResponseWriter, r *http.Request) {
-	buf := make([]byte, 4096)
-	n, err := r.Body.Read(buf)
-	if err != nil && err != io.EOF {
-		log.Fatal(err)
+	var buf []byte
+	var n int
+	handler := apiFHandlers[r.URL.Path[len("/api/"):]]
+	if handler == nil {
+		// unknown API function, no arguments
+		handler = unknownFPlug
+		buf = nil
+		n = 0
+	} else {
+		// valid API function, read request body
+		buf = make([]byte, 4096)
+		var err error
+		n, err = r.Body.Read(buf)
+		if err != nil && err != io.EOF {
+			log.Fatal(err)
+		}
 	}
 
-	response, err := apiFHandlers[r.URL.Path[len("/api/"):]](buf[:n])
+	response, err := handler(buf[:n])
 	if err != nil {
 		log.Println(err)
 	}
@@ -56,6 +68,10 @@ func CustomUnmarshal(data []byte, v interface{}) error {
 	msgpack.PutDecoder(dec)
 
 	return err
+}
+
+func unknownFPlug(_ []byte) (interface{}, error) {
+	return api.Response{Code: api.ENoFun}, nil
 }
 
 func handleFPing(_ []byte) (interface{}, error) {
