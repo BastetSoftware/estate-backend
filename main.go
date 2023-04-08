@@ -10,7 +10,10 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 )
+
+var origin string
 
 func writeResponse(w http.ResponseWriter, v interface{}) error {
 	data, err := msgpack.Marshal(v)
@@ -27,6 +30,8 @@ func writeResponse(w http.ResponseWriter, v interface{}) error {
 }
 
 func apiHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", origin)
+
 	var buf []byte
 	var n int
 	handler := apiFHandlers[r.URL.Path[len("/api/"):]]
@@ -449,6 +454,12 @@ var apiFHandlers map[string]api.RequestHandler
 
 func main() {
 	var err error
+
+	if o := os.Getenv("RESPONSE_ORIGIN"); o != "" {
+		origin = o
+	} else {
+		origin = "*"
+	}
 
 	/* setup handlers */
 
