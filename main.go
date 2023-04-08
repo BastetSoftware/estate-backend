@@ -5,11 +5,12 @@ import (
 	"BastetSoftware/backend/database"
 	"bytes"
 	"database/sql"
-	"github.com/vmihailenco/msgpack/v5"
-	"golang.org/x/crypto/bcrypt"
 	"io"
 	"log"
 	"net/http"
+
+	"github.com/vmihailenco/msgpack/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func writeResponse(w http.ResponseWriter, v interface{}) error {
@@ -339,10 +340,10 @@ func handleFGroupCreate(r []byte) (interface{}, error) {
 	}
 
 	// check that user can manage groups
-	resp, err := verifyManagesGroups(args.Token)
+	/*resp, err := verifyManagesGroups(args.Token)
 	if resp != nil {
 		return resp, err
-	}
+	}*/
 
 	_, err = database.CreateGroup(db, args.Name)
 	switch err {
@@ -448,6 +449,96 @@ func handleFGroupAddRemoveUser(r []byte) (interface{}, error) {
 	return api.Response{Code: 0}, nil
 }
 
+func handleFStructCreate(r []byte) (interface{}, error) {
+	// parse args
+	var args api.ArgsFStructCreate
+	err := CustomUnmarshal(r, &args)
+	if err != nil {
+		return api.Response{Code: api.EArgsInval}, err
+	}
+
+	_, err = database.VerifySession(db, []byte(args.Token))
+	switch err {
+	case nil:
+		break
+	case database.ErrNotLoggedIn:
+		return api.Response{Code: api.ENotLoggedIn}, nil
+	default:
+		return api.Response{Code: api.EUnknown}, err
+	}
+
+	structInfo := database.StructInfo{
+		Id:          0,
+		Name:        args.Name,
+		Description: args.Description,
+		District:    args.District,
+		Region:      args.Region,
+		Address:     args.Address,
+		Type:        args.Type,
+		State:       args.State,
+		Area:        args.Area,
+		Owner:       args.Owner,
+		Gid:         args.Gid,
+		Permissions: args.Permissions,
+	}
+	err = structInfo.AddStruct(db)
+	switch err {
+	case nil:
+		break
+	case database.ErrStructExists:
+		return api.Response{Code: api.EExists}, nil
+	default:
+		return api.Response{Code: api.EUnknown}, err
+	}
+
+	// success
+	return api.RespFStructCreate{Code: 0, Id: structInfo.Id}, nil
+}
+
+func handleFStructInfo(r []byte) (interface{}, error) {
+	// parse args
+	var args api.ArgsFStructInfo
+	err := CustomUnmarshal(r, &args)
+	if err != nil {
+		return api.Response{Code: api.EArgsInval}, err
+	}
+
+	_, err = database.VerifySession(db, []byte(args.Token))
+	switch err {
+	case nil:
+		break
+	case database.ErrNotLoggedIn:
+		return api.Response{Code: api.ENotLoggedIn}, nil
+	default:
+		return api.Response{Code: api.EUnknown}, err
+	}
+
+	structInfo, err := database.GetStructInfo(db, args.Id)
+	switch err {
+	case nil:
+		break
+	case database.ErrNoStruct:
+		return api.Response{Code: api.ENoEntry}, nil
+	default:
+		return api.Response{Code: api.EUnknown}, err
+	}
+
+	return api.RespFStructInfo{
+		Name:        structInfo.Name,
+		Description: structInfo.Description,
+		District:    structInfo.District,
+		Region:      structInfo.Region,
+		Address:     structInfo.Address,
+		Type:        structInfo.Type,
+		State:       structInfo.State,
+		Area:        structInfo.Area,
+		Owner:       structInfo.Owner,
+		Actual_user: structInfo.Actual_user,
+		Gid:         structInfo.Gid,
+		Permissions: structInfo.Permissions,
+	}, nil
+}
+
 var apiFHandlers map[string]api.RequestHandler
 
 func main() {
@@ -470,6 +561,8 @@ func main() {
 	apiFHandlers["group_remove"] = handleFGroupRemove
 	apiFHandlers["group_add_remove_user"] = handleFGroupAddRemoveUser
 
+	apiFHandlers["object_create"] = handleFStructCreate
+	apiFHandlers["object_get_info"] = handleFStructInfo
 	/* =(setup handlers)= */
 
 	db, err = database.OpenDB()
