@@ -331,6 +331,63 @@ func handleFGroupRemove(r *api.Request) (*api.Response, error) {
 	return &api.Response{Code: 0, Data: nil}, nil
 }
 
+func handleFGroupAddRemoveUser(r *api.Request) (*api.Response, error) {
+	// parse args
+	var args api.ArgsFGroupAddRemoveUser
+	err := CustomUnmarshal(r.Args, &args)
+	if err != nil {
+		return &api.Response{Code: api.EArgsInval, Data: nil}, err
+	}
+
+	// check that user can manage groups
+	resp, err := verifyManagesGroups(args.Token)
+	if resp != nil {
+		return resp, err
+	}
+
+	group, err := database.FindGroup(db, args.Group)
+	switch err {
+	case nil:
+		break
+	case database.ErrNoGroup:
+		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, err
+	}
+
+	user, err := database.FindUserInfo(db, args.Login)
+	switch err {
+	case nil:
+		break
+	case database.ErrNoUser:
+		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, err
+	}
+
+	switch r.Func {
+	case api.FGroupAddUser:
+		err = database.GroupAddUser(db, user.Id, group.Id)
+	case api.FGroupRemoveUser:
+		err = database.GroupRemoveUser(db, user.Id, group.Id)
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, err
+	}
+
+	switch err {
+	case nil:
+		break
+	case database.ErrAlreadyInGroup:
+		return &api.Response{Code: api.EExists, Data: nil}, nil
+	case database.ErrNoGroup:
+		return &api.Response{Code: api.ENoEntry, Data: nil}, nil
+	default:
+		return &api.Response{Code: api.EUnknown, Data: nil}, err
+	}
+
+	return &api.Response{Code: 0, Data: nil}, nil
+}
+
 var apiFHandlers [api.FNull]api.RequestHandler
 
 func handleRequest(r *api.Request) (*api.Response, error) {
@@ -356,6 +413,8 @@ func main() {
 
 	apiFHandlers[api.FGroupCreate] = handleFGroupCreate
 	apiFHandlers[api.FGroupRemove] = handleFGroupRemove
+	apiFHandlers[api.FGroupAddUser] = handleFGroupAddRemoveUser
+	apiFHandlers[api.FGroupRemoveUser] = handleFGroupAddRemoveUser
 
 	/* =(setup handlers)= */
 

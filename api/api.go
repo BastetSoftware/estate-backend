@@ -22,6 +22,8 @@ const (
 
 	FGroupCreate
 	FGroupRemove
+	FGroupAddUser
+	FGroupRemoveUser
 
 	FNull uint = iota
 )
@@ -95,6 +97,15 @@ type ArgsFUserEdit struct {
 type ArgsFGroupCreateRemove struct {
 	Token string
 	Name  string
+}
+
+/* FGroupAddUser */
+/* FGroupRemoveUser */
+
+type ArgsFGroupAddRemoveUser struct {
+	Token string
+	Group string
+	Login string
 }
 
 const (
