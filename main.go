@@ -477,11 +477,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// err = api.Listen("localhost:8080", handleRequest)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	http.HandleFunc("/api/", apiHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
