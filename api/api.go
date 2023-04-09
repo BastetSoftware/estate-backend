@@ -202,6 +202,13 @@ type RespFTaskCreate struct {
 	Id   int64
 }
 
+/* FTaskRemove */
+
+type ArgsFTaskRemove struct {
+	Token string
+	Id    int64
+}
+
 /*
  * Common
  */

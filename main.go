@@ -93,6 +93,7 @@ func main() {
 	apiFHandlers["object_get_info"] = api.HandleFStructInfo
 
 	apiFHandlers["task_create"] = api.HandleFTaskCreate
+	apiFHandlers["task_remove"] = api.HandleFTaskRemove
 
 	/* =(setup handlers)= */
 

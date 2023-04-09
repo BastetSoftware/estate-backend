@@ -44,3 +44,35 @@ func HandleFTaskCreate(r []byte) (interface{}, error) {
 	// success
 	return RespFTaskCreate{Code: 0, Id: task.Id}, nil
 }
+
+func HandleFTaskRemove(r []byte) (interface{}, error) {
+	// parse args
+	var args ArgsFTaskRemove
+	err := CustomUnmarshal(r, &args)
+	if err != nil {
+		return Response{Code: EArgsInval}, err
+	}
+
+	_, err = database.VerifySession(Db, []byte(args.Token))
+	switch err {
+	case nil:
+		break
+	case database.ErrNotLoggedIn:
+		return Response{Code: ENotLoggedIn}, nil
+	default:
+		return Response{Code: EUnknown}, err
+	}
+
+	err = database.RemoveTask(Db, args.Id)
+	switch err {
+	case nil:
+		break
+	case database.ErrNoTask:
+		return Response{Code: ENoEntry}, nil
+	default:
+		return Response{Code: EUnknown}, err
+	}
+
+	// success
+	return Response{Code: 0}, nil
+}
