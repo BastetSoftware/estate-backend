@@ -1,5 +1,11 @@
 package api
 
+import (
+	"bytes"
+	"database/sql"
+	"github.com/vmihailenco/msgpack/v5"
+)
+
 const (
 	EExists uint8 = iota + 1 // record exists
 	ENoEntry
@@ -113,4 +119,59 @@ type ArgsFGroupAddRemoveUser struct {
 	Action bool // true - add, false - remove
 }
 
+type ArgsFStructCreate struct {
+	Token       string
+	Name        string
+	Description string
+	District    string
+	Region      string
+	Address     string
+	Type        string
+	State       string
+	Area        int32
+	Owner       string
+	Actual_user string
+	Gid         int64
+	Permissions int8
+}
+
+type RespFStructCreate struct {
+	Code uint8
+	Id   int64
+}
+
+type ArgsFStructInfo struct {
+	Token string
+	Id    int64
+}
+
+type RespFStructInfo struct {
+	Name        string
+	Description string
+	District    string
+	Region      string
+	Address     string
+	Type        string
+	State       string
+	Area        int32
+	Owner       string
+	Actual_user string
+	Gid         int64
+	Permissions int8
+}
+
 type RequestHandler func(r []byte) (interface{}, error)
+
+func CustomUnmarshal(data []byte, v interface{}) error {
+	dec := msgpack.GetDecoder()
+
+	dec.Reset(bytes.NewReader(data))
+	dec.DisallowUnknownFields(true) // <- this is customized
+	err := dec.Decode(v)
+
+	msgpack.PutDecoder(dec)
+
+	return err
+}
+
+var Db *sql.DB // Db reference
