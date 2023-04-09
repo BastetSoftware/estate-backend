@@ -92,6 +92,10 @@ func main() {
 	apiFHandlers["object_create"] = api.HandleFStructCreate
 	apiFHandlers["object_get_info"] = api.HandleFStructInfo
 
+	apiFHandlers["task_create"] = api.HandleFTaskCreate
+	apiFHandlers["task_remove"] = api.HandleFTaskRemove
+	apiFHandlers["task_get_info"] = api.HandleFTaskGetInfo
+
 	/* =(setup handlers)= */
 
 	api.Db, err = database.OpenDB()

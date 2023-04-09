@@ -38,12 +38,13 @@ create table objects
     area        int          not null, -- площадь
     owner       text         not null, -- владелец
     actual_user text         not null, -- фактический пользователь
-    gid         int          not null,
-    permissions tinyint      not null, -- 7,6 - reserved; 5,4 - user; 3,2 - group; 1,0 - other;
-                                       -- levels: (0, 1, 2, 3) = (none, read, edit, manage)
-                                       -- read - readonly
-                                       -- edit - read + edit fields
-                                       -- manage - edit + change groups and permissions
+
+    gid         int     not null,
+    permissions tinyint not null, -- 7,6 - reserved; 5,4 - user; 3,2 - group; 1,0 - other;
+                                  -- levels: (0, 1, 2, 3) = (none, read, edit, manage)
+                                  -- read - readonly
+                                  -- edit - read + edit fields
+                                  -- manage - edit + change groups and permissions
 
     foreign key (gid) references grps (id)
 );
@@ -52,12 +53,19 @@ create table tasks
 (
     id          int auto_increment primary key,
     name        text         not null,
-    object      int          not null,
     description text         not null,
-    deadline    datetime     null,
+    deadline    int          null,
     status      varchar(256) not null,
 
-    foreign key (object) references objects (id)
+    object int not null,
+
+    maintainer  int     not null,
+    gid         int     not null,
+    permissions tinyint not null,
+
+    foreign key (object) references objects (id),
+    foreign key (maintainer) references users (id),
+    foreign key (gid) references grps (id)
 );
 
 create table tags
