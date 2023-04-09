@@ -188,6 +188,31 @@ No specific response data
 | EAccessDenied | user has no rights to grant this permission                 |
 | EUnknown      | unknown error                                               |
 
+#### user_list_groups
+
+##### Request args
+
+| argument | type   | description       |
+|----------|--------|-------------------|
+| Token    | string | session token     |
+| Login    | string | target user login |
+
+##### Response data
+
+| argument | type    | description            |
+|----------|---------|------------------------|
+| Name     | string  | group name             |
+| Gids     | int64[] | groups user belongs to |
+| Count    | int     | number of groups       |
+
+##### Possible errors
+
+| error        | description               |
+|--------------|---------------------------|
+| EArgsInval   | invalid request arguments |
+| ENoEntry     | user does not exist       |
+| EUnknown     | unknown error             |
+
 ### Groups manipulation
 
 #### group_create
@@ -265,3 +290,28 @@ No specific response data
 | EAccessDenied | user has no rights to manage groups                         |
 | EExists       | user is already in group                                    |
 | EUnknown      | unknown error                                               |
+
+#### group_get_info
+
+##### Request args
+
+| argument | type   | description   |
+|----------|--------|---------------|
+| Token    | string | session token |
+| Gid      | int64  | GID           |
+
+##### Response data
+
+| argument | type    | description                  |
+|----------|---------|------------------------------|
+| Name     | string  | group name                   |
+| Uids     | int64[] | users in the group           |
+| Count    | int     | number of users in the group |
+
+##### Possible errors
+
+| error        | description               |
+|--------------|---------------------------|
+| EArgsInval   | invalid request arguments |
+| ENoEntry     | group does not exist      |
+| EUnknown     | unknown error             |

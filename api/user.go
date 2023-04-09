@@ -225,3 +225,35 @@ func HandleFUserSetManagesGroups(r []byte) (interface{}, error) {
 
 	return Response{Code: 0}, nil
 }
+
+func HandleFUserListGroups(r []byte) (interface{}, error) {
+	// parse args
+	var args ArgsFUserListGroups
+	err := CustomUnmarshal(r, &args)
+	if err != nil {
+		return Response{Code: EArgsInval}, err
+	}
+
+	// find target user
+	userinfo, err := database.FindUserInfo(Db, args.Login)
+	switch err {
+	case nil:
+		break
+	case database.ErrNoUser:
+		return Response{Code: ENoEntry}, nil
+	default:
+		return Response{Code: EUnknown}, err
+	}
+
+	// get user groups
+	gids, err := database.ListGroupsOrUsers(Db, database.UserListGroups, userinfo.Id)
+	if err != nil {
+		return Response{Code: EUnknown}, err
+	}
+
+	return RespFUserListGroups{
+		Code:  0,
+		Gids:  gids,
+		Count: len(gids),
+	}, nil
+}
