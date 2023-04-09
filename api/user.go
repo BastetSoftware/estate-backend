@@ -226,40 +226,34 @@ func HandleFUserSetManagesGroups(r []byte) (interface{}, error) {
 	return Response{Code: 0}, nil
 }
 
-/* TODO
 func HandleFUserListGroups(r []byte) (interface{}, error) {
 	// parse args
-	var args api.ArgsFUserListGroups
+	var args ArgsFUserListGroups
 	err := CustomUnmarshal(r, &args)
 	if err != nil {
-		return api.Response{Code: api.EArgsInval}, err
+		return Response{Code: EArgsInval}, err
 	}
 
 	// find target user
-	userinfo, err := database.FindUserInfo(db, args.Login)
+	userinfo, err := database.FindUserInfo(Db, args.Login)
 	switch err {
 	case nil:
 		break
 	case database.ErrNoUser:
-		return api.Response{Code: api.ENoEntry}, nil
+		return Response{Code: ENoEntry}, nil
 	default:
-		return api.Response{Code: api.EUnknown}, err
+		return Response{Code: EUnknown}, err
 	}
 
 	// get user groups
-	gids, err := database.ListGroupsOrUsers(db, database.UserListGroups, userinfo.Id)
+	gids, err := database.ListGroupsOrUsers(Db, database.UserListGroups, userinfo.Id)
 	if err != nil {
-		return api.Response{Code: api.EUnknown}, err
+		return Response{Code: EUnknown}, err
 	}
 
-	for _, gid := range gids {
-		group, err := database.
-	}
-
-	return api.RespFUserListGroups{
-		Code:   0,
-		Groups: groups,
-		Count:  len(groups),
+	return RespFUserListGroups{
+		Code:  0,
+		Gids:  gids,
+		Count: len(gids),
 	}, nil
 }
-*/

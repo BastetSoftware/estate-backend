@@ -18,6 +18,26 @@ type Group struct {
 	Name string
 }
 
+func GetGroup(db *sql.DB, gid int64) (*Group, error) {
+	row := db.QueryRow(
+		"SELECT * FROM grps WHERE id=?;",
+		gid,
+	)
+	var group Group
+	if err := row.Scan(
+		&group.Id,
+		&group.Name,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNoGroup
+		} else {
+			return nil, err
+		}
+	}
+
+	return &group, nil
+}
+
 func FindGroup(db *sql.DB, name string) (*Group, error) {
 	row := db.QueryRow(
 		"SELECT * FROM grps WHERE name=?;",

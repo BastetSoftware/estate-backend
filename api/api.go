@@ -97,9 +97,9 @@ type ArgsFUserListGroups struct {
 }
 
 type RespFUserListGroups struct {
-	Code   uint8
-	Groups []string
-	Count  int
+	Code  uint8
+	Gids  []int64
+	Count int
 }
 
 /* FGroupCreate */
@@ -117,6 +117,19 @@ type ArgsFGroupAddRemoveUser struct {
 	Group  string
 	Login  string
 	Action bool // true - add, false - remove
+}
+
+/* FGroupListUsers */
+
+type ArgsFGroupListUsers struct {
+	Token string
+	Gid   int64
+}
+
+type RespFGroupListUsers struct {
+	Code  uint8
+	Uids  []int64
+	Count int
 }
 
 type ArgsFStructCreate struct {

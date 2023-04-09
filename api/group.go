@@ -148,3 +148,24 @@ func HandleFGroupAddRemoveUser(r []byte) (interface{}, error) {
 
 	return Response{Code: 0}, nil
 }
+
+func HandleFGroupListUsers(r []byte) (interface{}, error) {
+	// parse args
+	var args ArgsFGroupListUsers
+	err := CustomUnmarshal(r, &args)
+	if err != nil {
+		return Response{Code: EArgsInval}, err
+	}
+
+	// get group's users
+	uids, err := database.ListGroupsOrUsers(Db, database.GroupListUsers, args.Gid)
+	if err != nil {
+		return Response{Code: EUnknown}, err
+	}
+
+	return RespFGroupListUsers{
+		Code:  0,
+		Uids:  uids,
+		Count: len(uids),
+	}, nil
+}
