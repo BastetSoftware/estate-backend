@@ -18,11 +18,16 @@ const (
 	EUnknown   uint8 = 255 // unknown error
 )
 
+/*
+ * API functions' arguments and responses
+ */
+
 type Request struct {
 	Func uint8
 	Args []byte
 }
 
+// Response: basic response
 type Response struct {
 	Code uint8
 }
@@ -133,6 +138,8 @@ type RespFGroupGetInfo struct {
 	Count int
 }
 
+/* FStructCreate */
+
 type ArgsFStructCreate struct {
 	Token       string
 	Name        string
@@ -154,6 +161,8 @@ type RespFStructCreate struct {
 	Id   int64
 }
 
+/* FStructInfo */
+
 type ArgsFStructInfo struct {
 	Token string
 	Id    int64
@@ -173,6 +182,29 @@ type RespFStructInfo struct {
 	Gid         int64
 	Permissions int8
 }
+
+/* FTaskCreate */
+
+type ArgsFTaskCreate struct {
+	Token       string
+	Name        string
+	Description string
+	Deadline    int64
+	Status      string
+	Object      int64
+	Maintainer  int64
+	Gid         int64
+	Permissions uint8
+}
+
+type RespFTaskCreate struct {
+	Code uint8
+	Id   int64
+}
+
+/*
+ * Common
+ */
 
 type RequestHandler func(r []byte) (interface{}, error)
 
