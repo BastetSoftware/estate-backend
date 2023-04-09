@@ -100,4 +100,45 @@ type ArgsFGroupAddRemoveUser struct {
 	Action bool // true - add, false - remove
 }
 
+type ArgsFStructCreate struct {
+	Token       string
+	Name        string
+	Description string
+	District    string
+	Region      string
+	Address     string
+	Type        string
+	State       string
+	Area        int32
+	Owner       string
+	Actual_user string
+	Gid         int64
+	Permissions int8
+}
+
+type RespFStructCreate struct {
+	Code uint8
+	Id   int64
+}
+
+type ArgsFStructInfo struct {
+	Token string
+	Id    int64
+}
+
+type RespFStructInfo struct {
+	Name        string
+	Description string
+	District    string
+	Region      string
+	Address     string
+	Type        string
+	State       string
+	Area        int32
+	Owner       string
+	Actual_user string
+	Gid         int64
+	Permissions int8
+}
+
 type RequestHandler func(r []byte) (interface{}, error)
