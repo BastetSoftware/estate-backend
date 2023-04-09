@@ -1,6 +1,10 @@
 package api
 
-import "BastetSoftware/backend/database"
+import (
+	"BastetSoftware/backend/database"
+
+	"github.com/vmihailenco/msgpack/v5"
+)
 
 func HandleFStructCreate(r []byte) (interface{}, error) {
 	// parse args
@@ -149,5 +153,137 @@ func HandleFDeleteStruct(r []byte) (interface{}, error) {
 	default:
 		return Response{Code: EUnknown}, err
 	}
+	return Response{Code: 0}, nil
+}
+
+func HandleFStructEdit(r []byte) (interface{}, error) {
+	var args ArgsFStructEdit
+	err := msgpack.Unmarshal(r, &args)
+	if err != nil || args.Token == "" {
+		return Response{Code: EArgsInval}, err
+	}
+
+	_, err = database.VerifySession(Db, []byte(args.Token))
+	switch err {
+	case nil:
+		break
+	case database.ErrNotLoggedIn:
+		return Response{Code: ENotLoggedIn}, nil
+	default:
+		return Response{Code: EUnknown}, err
+	}
+
+	uid := args.Id
+
+	if args.Name != nil {
+		err = database.StructChangeName(Db, uid, *args.Name)
+		switch err {
+		case nil:
+			break
+		default:
+			return Response{Code: EUnknown}, err
+		}
+	}
+
+	if args.Description != nil {
+		err = database.StructChangeDescription(Db, uid, *args.Description)
+		switch err {
+		case nil:
+			break
+		default:
+			return Response{Code: EUnknown}, err
+		}
+	}
+
+	if args.District != nil {
+		err = database.StructChangeDistrict(Db, uid, *args.District)
+		switch err {
+		case nil:
+			break
+		default:
+			return Response{Code: EUnknown}, err
+		}
+	}
+
+	if args.Region != nil {
+		err = database.StructChangeRegion(Db, uid, *args.Region)
+		switch err {
+		case nil:
+			break
+		default:
+			return Response{Code: EUnknown}, err
+		}
+	}
+
+	if args.Address != nil {
+		err = database.StructChangeAddress(Db, uid, *args.Address)
+		switch err {
+		case nil:
+			break
+		default:
+			return Response{Code: EUnknown}, err
+		}
+	}
+
+	if args.Type != nil {
+		err = database.StructChangeType(Db, uid, *args.Type)
+		switch err {
+		case nil:
+			break
+		default:
+			return Response{Code: EUnknown}, err
+		}
+	}
+
+	if args.State != nil {
+		err = database.StructChangeState(Db, uid, *args.State)
+		switch err {
+		case nil:
+			break
+		default:
+			return Response{Code: EUnknown}, err
+		}
+	}
+
+	if args.Area != nil {
+		err = database.StructChangeArea(Db, uid, *args.Area)
+		switch err {
+		case nil:
+			break
+		default:
+			return Response{Code: EUnknown}, err
+		}
+	}
+
+	if args.Owner != nil {
+		err = database.StructChangeOwner(Db, uid, *args.Owner)
+		switch err {
+		case nil:
+			break
+		default:
+			return Response{Code: EUnknown}, err
+		}
+	}
+
+	if args.Actual_user != nil {
+		err = database.StructChangeActualUser(Db, uid, *args.Actual_user)
+		switch err {
+		case nil:
+			break
+		default:
+			return Response{Code: EUnknown}, err
+		}
+	}
+
+	if args.Permissions != nil {
+		err = database.StructChangePermissions(Db, uid, *args.Permissions)
+		switch err {
+		case nil:
+			break
+		default:
+			return Response{Code: EUnknown}, err
+		}
+	}
+
 	return Response{Code: 0}, nil
 }
