@@ -103,7 +103,7 @@ func GetStructInfo(db *sql.DB, id int64) (*StructInfo, error) {
 }
 
 func FindStructures(db *sql.DB, filter ArgsFStructFind) ([]StructInfo, error) {
-	query := "SELECT * FROM objects WHERE "
+	query := "SELECT * FROM objects "
 	var params []string
 	if filter.Name != "" {
 		params = append(params, "name = \""+filter.Name+"\"")
@@ -138,7 +138,7 @@ func FindStructures(db *sql.DB, filter ArgsFStructFind) ([]StructInfo, error) {
 	}
 	for i := 0; i < len(params); i++ {
 		if i == 0 {
-			query += params[i]
+			query += " WHERE " + params[i]
 		} else {
 			query += " AND " + params[i]
 		}
