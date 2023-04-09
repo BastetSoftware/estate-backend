@@ -83,6 +83,19 @@ type ArgsFUserSetManagesGroups struct {
 	Value bool
 }
 
+/* FUserListGroups */
+
+type ArgsFUserListGroups struct {
+	Token string
+	Login string
+}
+
+type RespFUserListGroups struct {
+	Code   uint8
+	Groups []string
+	Count  int
+}
+
 /* FGroupCreate */
 /* FGroupRemove */
 
