@@ -23,6 +23,17 @@ type Task struct {
 	Permissions uint8
 }
 
+type TaskFilter struct {
+	Name         *string
+	Description  *string
+	DeadlineFrom *int64
+	DeadlineTo   *int64
+	Status       *string
+	Object       *int64
+	Maintainer   *int64
+	Gid          *int64
+}
+
 func CreateTask(db *sql.DB, task *Task) (int64, error) {
 	result, err := db.Exec(
 		"INSERT INTO tasks(name,description,deadline,status,object,maintainer,gid,permissions) VALUES(?,?,?,?,?,?,?,?);",
@@ -94,4 +105,61 @@ func GetTask(db *sql.DB, id int64) (*Task, error) {
 	}
 
 	return &task, nil
+}
+
+func FilterTasks(db *sql.DB, filter TaskFilter) ([]*Task, error) {
+	rows, err := db.Query(`SELECT * FROM tasks
+	    WHERE ((name LIKE ?) OR ? IS NULL)
+	      AND ((description LIKE ?) OR ? IS NULL)
+	      AND ((deadline >= ?) OR ? IS NULL)
+	      AND ((deadline <= ?) OR ? IS NULL)
+	      AND ((status LIKE ?) OR ? IS NULL)
+	      AND ((object = ?) OR ? IS NULL)
+	      AND ((maintainer = ?) OR ? IS NULL)
+	      AND ((Gid = ?) OR ? IS NULL);`,
+		filter.Name,
+		filter.Name,
+		filter.Description,
+		filter.Description,
+		filter.DeadlineFrom,
+		filter.DeadlineFrom,
+		filter.DeadlineTo,
+		filter.DeadlineTo,
+		filter.Status,
+		filter.Status,
+		filter.Object,
+		filter.Object,
+		filter.Maintainer,
+		filter.Maintainer,
+		filter.Gid,
+		filter.Gid,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tasks := make([]*Task, 0)
+	for rows.Next() {
+		var task Task
+		err := rows.Scan(
+			&task.Id,
+			&task.Name,
+			&task.Description,
+			&task.Deadline,
+			&task.Status,
+			&task.Object,
+			&task.Maintainer,
+			&task.Gid,
+			&task.Permissions,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		tasks = append(tasks, &task)
+	}
+
+	return tasks, nil
 }
