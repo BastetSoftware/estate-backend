@@ -203,6 +203,22 @@ type ArgsFDeleteStruct struct {
 	Id    int64
 }
 
+type ArgsFStructEdit struct {
+	Token       string
+	Id          int64
+	Name        *string
+	Description *string
+	District    *string
+	Region      *string
+	Address     *string
+	Type        *string
+	State       *string
+	Area        *int32
+	Owner       *string
+	Actual_user *string
+	Permissions *int8
+}
+
 type RequestHandler func(r []byte) (interface{}, error)
 
 func CustomUnmarshal(data []byte, v interface{}) error {
