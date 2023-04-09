@@ -2,6 +2,7 @@ package api
 
 import (
 	"BastetSoftware/backend/database"
+
 	"github.com/vmihailenco/msgpack/v5"
 	"golang.org/x/crypto/bcrypt"
 )

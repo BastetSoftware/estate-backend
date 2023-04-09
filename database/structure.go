@@ -3,6 +3,8 @@ package database
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"strconv"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -24,6 +26,25 @@ type StructInfo struct {
 	Actual_user string
 	Gid         int64
 	Permissions int8
+}
+
+type ArgsFStructFind struct {
+	Token       string
+	Name        string
+	Description string
+	District    string
+	Region      string
+	Address     string
+	Type        string
+	State       string
+	AreaFrom    *int32
+	AreaTo      *int32
+	Owner       string
+	Actual_user string
+	Gid         *int64
+	Limit       int16
+	SortAsc     bool
+	Offset      int16
 }
 
 func (strct *StructInfo) AddStruct(db *sql.DB) error {
@@ -79,4 +100,81 @@ func GetStructInfo(db *sql.DB, id int64) (*StructInfo, error) {
 	}
 
 	return &strct, nil
+}
+
+func FindStructures(db *sql.DB, filter ArgsFStructFind) ([]StructInfo, error) {
+	query := "SELECT * FROM objects WHERE "
+	var params []string
+	if filter.Name != "" {
+		params = append(params, "name = \""+filter.Name+"\"")
+	}
+	if filter.Description != "" {
+		params = append(params, "desciprtion = \""+filter.Description+"\"")
+	}
+	if filter.District != "" {
+		params = append(params, "district = \""+filter.District+"\"")
+	}
+	if filter.Region != "" {
+		params = append(params, "region = \""+filter.Region+"\"")
+	}
+	if filter.Address != "" {
+		params = append(params, "address = \""+filter.Address+"\"")
+	}
+	if filter.Type != "" {
+		params = append(params, "type = \""+filter.Type+"\"")
+	}
+	if filter.State != "" {
+		params = append(params, "state= \""+filter.State+"\"")
+	}
+	if filter.AreaFrom != nil && filter.AreaTo != nil {
+		params = append(params, "area >= "+strconv.FormatInt(int64(*filter.AreaFrom), 10)+" and "+"area <= "+strconv.FormatInt(int64(*filter.AreaTo), 10))
+	} else if filter.AreaTo != nil {
+		params = append(params, "area <"+strconv.FormatInt(int64(*filter.AreaTo), 10))
+	} else if filter.AreaFrom != nil {
+		params = append(params, "area > "+strconv.FormatInt(int64(*filter.AreaFrom), 10))
+	}
+	if filter.Gid != nil {
+		params = append(params, "gid = "+strconv.FormatInt(int64(*filter.Gid), 10))
+	}
+	for i := 0; i < len(params); i++ {
+		if i == 0 {
+			query += params[i]
+		} else {
+			query += " AND " + params[i]
+		}
+	}
+	fmt.Println(query)
+	rows, err := db.Query(query + " LIMIT " + strconv.FormatInt(int64(filter.Limit), 10))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	structures := make([]StructInfo, 0)
+	for rows.Next() {
+		t := StructInfo{}
+		err := rows.Scan(
+			&t.Id,
+			&t.Name,
+			&t.Description,
+			&t.District,
+			&t.Region,
+			&t.Address,
+			&t.Type,
+			&t.State,
+			&t.Area,
+			&t.Owner,
+			&t.Actual_user,
+			&t.Gid,
+			&t.Permissions,
+		)
+		if err != nil {
+			return nil, err
+		}
+		structures = append(structures, t)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return structures, nil
+
 }
