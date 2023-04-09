@@ -178,3 +178,14 @@ func FindStructures(db *sql.DB, filter ArgsFStructFind) ([]StructInfo, error) {
 	return structures, nil
 
 }
+
+func DeleteStruct(db *sql.DB, Id int64) error {
+	_, err := db.Exec(
+		"DELETE FROM objects WHERE id=?;",
+		Id,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}

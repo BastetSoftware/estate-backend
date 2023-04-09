@@ -198,6 +198,11 @@ type RespFStructFind struct {
 	Structures []database.StructInfo
 }
 
+type ArgsFDeleteStruct struct {
+	Token string
+	Id    int64
+}
+
 type RequestHandler func(r []byte) (interface{}, error)
 
 func CustomUnmarshal(data []byte, v interface{}) error {
