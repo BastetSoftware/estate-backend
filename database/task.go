@@ -7,6 +7,7 @@ import (
 )
 
 var ErrTaskExists = errors.New("task already exists")
+var ErrNoTask = errors.New("task does not exist")
 
 type Task struct {
 	Id          int64
@@ -50,4 +51,47 @@ func CreateTask(db *sql.DB, task *Task) (int64, error) {
 	}
 
 	return id, nil
+}
+
+func RemoveTask(db *sql.DB, id int64) error {
+	result, err := db.Exec("DELETE FROM tasks WHERE id=?;", id)
+	if err != nil {
+		return err
+	}
+
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n < 1 {
+		return ErrNoTask
+	}
+
+	return err
+}
+
+func GetTask(db *sql.DB, id int64) (*Task, error) {
+	row := db.QueryRow("SELECT * FROM tasks WHERE id=?;", id)
+
+	var task Task
+	err := row.Scan(
+		&task.Id,
+		&task.Name,
+		&task.Description,
+		&task.Deadline,
+		&task.Status,
+		&task.Object,
+		&task.Maintainer,
+		&task.Gid,
+		&task.Permissions,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNoTask
+		} else {
+			return nil, err
+		}
+	}
+
+	return &task, nil
 }
