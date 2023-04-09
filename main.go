@@ -94,6 +94,11 @@ func main() {
 	apiFHandlers["find_object"] = api.HandleFStructFind
 	apiFHandlers["object_delete"] = api.HandleFDeleteStruct
 	apiFHandlers["object_change"] = api.HandleFStructEdit
+
+	apiFHandlers["task_create"] = api.HandleFTaskCreate
+	apiFHandlers["task_remove"] = api.HandleFTaskRemove
+	apiFHandlers["task_get_info"] = api.HandleFTaskGetInfo
+
 	/* =(setup handlers)= */
 
 	api.Db, err = database.OpenDB()
