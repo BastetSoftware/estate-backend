@@ -17,10 +17,12 @@ print(response.content)'''
 data = {
     "Token":       "CCmS1zwIRIukZwii31xOwrkrA2cz+fWA",
 	"Id":        2,
+
+
 }
 
 query = msgpack.packb(data, use_bin_type=True)
-response = requests.post('http://localhost:8080/api/object_get_info', data=query)
+response = requests.post('http://localhost:8080/api/object_delete', data=query)
 
 print(response.status_code)
 print(msgpack.unpackb(response.content))

@@ -1,8 +1,10 @@
 package api
 
 import (
+	"BastetSoftware/backend/database"
 	"bytes"
 	"database/sql"
+
 	"github.com/vmihailenco/msgpack/v5"
 )
 
@@ -181,6 +183,33 @@ type RespFStructInfo struct {
 	Actual_user string
 	Gid         int64
 	Permissions int8
+}
+
+type ArgsFStructFind struct {
+	Token       string
+	Name        string
+	Description string
+	District    string
+	Region      string
+	Address     string
+	Type        string
+	State       string
+	AreaFrom    int32
+	AreaTo      int32
+	Owner       string
+	Actual_user string
+	Gid         int64
+	Limit       int16
+	SortAsc     bool
+}
+
+type RespFStructFind struct {
+	Structures []database.StructInfo
+}
+
+type ArgsFDeleteStruct struct {
+	Token string
+	Id    int64
 }
 
 /* FTaskCreate */

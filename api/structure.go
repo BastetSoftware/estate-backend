@@ -91,3 +91,63 @@ func HandleFStructInfo(r []byte) (interface{}, error) {
 		Permissions: structInfo.Permissions,
 	}, nil
 }
+
+func HandleFStructFind(r []byte) (interface{}, error) {
+	var args database.ArgsFStructFind
+	err := CustomUnmarshal(r, &args)
+	if err != nil {
+		return Response{Code: EArgsInval}, err
+	}
+
+	_, err = database.VerifySession(Db, []byte(args.Token))
+	switch err {
+	case nil:
+		break
+	case database.ErrNotLoggedIn:
+		return Response{Code: ENotLoggedIn}, nil
+	default:
+		return Response{Code: EUnknown}, err
+	}
+
+	structsInfo, err := database.FindStructures(Db, args)
+	switch err {
+	case nil:
+		break
+	case database.ErrNoStruct:
+		return Response{Code: ENoEntry}, nil
+	default:
+		return Response{Code: EUnknown}, err
+	}
+
+	return RespFStructFind{
+		Structures: structsInfo,
+	}, nil
+}
+
+func HandleFDeleteStruct(r []byte) (interface{}, error) {
+	var args ArgsFDeleteStruct
+	err := CustomUnmarshal(r, &args)
+	if err != nil {
+		return Response{Code: EArgsInval}, err
+	}
+
+	_, err = database.VerifySession(Db, []byte(args.Token))
+	switch err {
+	case nil:
+		break
+	case database.ErrNotLoggedIn:
+		return Response{Code: ENotLoggedIn}, nil
+	default:
+		return Response{Code: EUnknown}, err
+	}
+	err = database.DeleteStruct(Db, args.Id)
+	switch err {
+	case nil:
+		break
+	case database.ErrNoStruct:
+		return Response{Code: ENoEntry}, nil
+	default:
+		return Response{Code: EUnknown}, err
+	}
+	return Response{Code: 0}, nil
+}
