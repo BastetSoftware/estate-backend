@@ -1,5 +1,11 @@
 package api
 
+import (
+	"bytes"
+	"database/sql"
+	"github.com/vmihailenco/msgpack/v5"
+)
+
 const (
 	EExists uint8 = iota + 1 // record exists
 	ENoEntry
@@ -142,3 +148,17 @@ type RespFStructInfo struct {
 }
 
 type RequestHandler func(r []byte) (interface{}, error)
+
+func CustomUnmarshal(data []byte, v interface{}) error {
+	dec := msgpack.GetDecoder()
+
+	dec.Reset(bytes.NewReader(data))
+	dec.DisallowUnknownFields(true) // <- this is customized
+	err := dec.Decode(v)
+
+	msgpack.PutDecoder(dec)
+
+	return err
+}
+
+var Db *sql.DB // Db reference
