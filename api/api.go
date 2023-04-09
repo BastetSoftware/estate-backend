@@ -119,15 +119,16 @@ type ArgsFGroupAddRemoveUser struct {
 	Action bool // true - add, false - remove
 }
 
-/* FGroupListUsers */
+/* FGroupGetInfo */
 
-type ArgsFGroupListUsers struct {
+type ArgsFGroupGetInfo struct {
 	Token string
 	Gid   int64
 }
 
-type RespFGroupListUsers struct {
+type RespFGroupGetInfo struct {
 	Code  uint8
+	Name  string
 	Uids  []int64
 	Count int
 }
