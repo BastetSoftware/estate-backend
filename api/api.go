@@ -209,6 +209,25 @@ type ArgsFTaskRemove struct {
 	Id    int64
 }
 
+/* FTaskGetInfo */
+
+type ArgsFTaskGetInfo struct {
+	Token string
+	Id    int64
+}
+
+type RespFTaskGetInfo struct {
+	Code        uint8
+	Name        string
+	Description string
+	Deadline    int64
+	Status      string
+	Object      int64
+	Maintainer  int64
+	Gid         int64
+	Permissions uint8
+}
+
 /*
  * Common
  */
