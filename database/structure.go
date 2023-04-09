@@ -44,8 +44,7 @@ func (strct *StructInfo) AddStruct(db *sql.DB) error {
 		return err
 	}
 
-	id, err := result.LastInsertId()
-	strct.Id = id
+	strct.Id, err = result.LastInsertId()
 	if err != nil {
 		return err
 	}

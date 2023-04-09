@@ -340,10 +340,10 @@ func handleFGroupCreate(r []byte) (interface{}, error) {
 	}
 
 	// check that user can manage groups
-	/*resp, err := verifyManagesGroups(args.Token)
+	resp, err := verifyManagesGroups(args.Token)
 	if resp != nil {
 		return resp, err
-	}*/
+	}
 
 	_, err = database.CreateGroup(db, args.Name)
 	switch err {
