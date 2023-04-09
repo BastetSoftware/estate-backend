@@ -82,10 +82,12 @@ func main() {
 	apiFHandlers["user_get_info"] = api.HandleFUserInfo
 	apiFHandlers["user_edit"] = api.HandleFUserEdit
 	apiFHandlers["user_set_manages_groups"] = api.HandleFUserSetManagesGroups
+	apiFHandlers["user_list_groups"] = api.HandleFUserListGroups
 
 	apiFHandlers["group_create"] = api.HandleFGroupCreate
 	apiFHandlers["group_remove"] = api.HandleFGroupRemove
 	apiFHandlers["group_add_remove_user"] = api.HandleFGroupAddRemoveUser
+	apiFHandlers["group_get_info"] = api.HandleFGroupGetInfo
 
 	apiFHandlers["object_create"] = api.HandleFStructCreate
 	apiFHandlers["object_get_info"] = api.HandleFStructInfo

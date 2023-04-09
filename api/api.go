@@ -89,6 +89,19 @@ type ArgsFUserSetManagesGroups struct {
 	Value bool
 }
 
+/* FUserListGroups */
+
+type ArgsFUserListGroups struct {
+	Token string
+	Login string
+}
+
+type RespFUserListGroups struct {
+	Code  uint8
+	Gids  []int64
+	Count int
+}
+
 /* FGroupCreate */
 /* FGroupRemove */
 
@@ -104,6 +117,20 @@ type ArgsFGroupAddRemoveUser struct {
 	Group  string
 	Login  string
 	Action bool // true - add, false - remove
+}
+
+/* FGroupGetInfo */
+
+type ArgsFGroupGetInfo struct {
+	Token string
+	Gid   int64
+}
+
+type RespFGroupGetInfo struct {
+	Code  uint8
+	Name  string
+	Uids  []int64
+	Count int
 }
 
 type ArgsFStructCreate struct {
