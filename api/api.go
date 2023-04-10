@@ -273,6 +273,25 @@ type RespFTaskGetInfo struct {
 	Permissions uint8
 }
 
+/* FTaskSearch */
+
+type ArgsFTaskSearch struct {
+	Token        string
+	Name         *string
+	Description  *string
+	DeadlineFrom *int64
+	DeadlineTo   *int64
+	Status       *string
+	Object       *int64
+	Maintainer   *int64
+	Gid          *int64
+}
+
+type RespFTaskSearch struct {
+	Code  uint8
+	Tasks []database.Task
+}
+
 /*
  * Common
  */

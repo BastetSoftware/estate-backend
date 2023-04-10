@@ -98,6 +98,7 @@ func main() {
 	apiFHandlers["task_create"] = api.HandleFTaskCreate
 	apiFHandlers["task_remove"] = api.HandleFTaskRemove
 	apiFHandlers["task_get_info"] = api.HandleFTaskGetInfo
+	apiFHandlers["task_search"] = api.HandleFTaskSearch
 
 	/* =(setup handlers)= */
 
