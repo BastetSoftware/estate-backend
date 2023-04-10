@@ -146,6 +146,9 @@ func HandleFTaskSearch(r []byte) (interface{}, error) {
 		Object:       args.Object,
 		Maintainer:   args.Maintainer,
 		Gid:          args.Gid,
+
+		Limit:  args.Limit,
+		Offset: args.Offset,
 	}
 	tasks, err := database.FilterTasks(Db, &filter)
 	if err != nil {
