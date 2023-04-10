@@ -285,6 +285,9 @@ type ArgsFTaskSearch struct {
 	Object       *int64
 	Maintainer   *int64
 	Gid          *int64
+
+	Limit  int16
+	Offset int16
 }
 
 type RespFTaskSearch struct {

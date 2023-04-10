@@ -32,6 +32,9 @@ type TaskFilter struct {
 	Object       *int64
 	Maintainer   *int64
 	Gid          *int64
+
+	Limit  int16
+	Offset int16
 }
 
 func CreateTask(db *sql.DB, task *Task) (int64, error) {
@@ -116,7 +119,9 @@ func FilterTasks(db *sql.DB, filter *TaskFilter) ([]*Task, error) {
 	      AND ((status LIKE ?) OR ? IS NULL)
 	      AND ((object = ?) OR ? IS NULL)
 	      AND ((maintainer = ?) OR ? IS NULL)
-	      AND ((Gid = ?) OR ? IS NULL);`,
+	      AND ((Gid = ?) OR ? IS NULL)
+	    LIMIT ? OFFSET ?;`,
+
 		filter.Name,
 		filter.Name,
 		filter.Description,
@@ -133,6 +138,9 @@ func FilterTasks(db *sql.DB, filter *TaskFilter) ([]*Task, error) {
 		filter.Maintainer,
 		filter.Gid,
 		filter.Gid,
+
+		filter.Limit,
+		filter.Offset,
 	)
 
 	if err != nil {
