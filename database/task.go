@@ -107,7 +107,7 @@ func GetTask(db *sql.DB, id int64) (*Task, error) {
 	return &task, nil
 }
 
-func FilterTasks(db *sql.DB, filter TaskFilter) ([]*Task, error) {
+func FilterTasks(db *sql.DB, filter *TaskFilter) ([]*Task, error) {
 	rows, err := db.Query(`SELECT * FROM tasks
 	    WHERE ((name LIKE ?) OR ? IS NULL)
 	      AND ((description LIKE ?) OR ? IS NULL)

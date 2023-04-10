@@ -1,6 +1,9 @@
 package api
 
-import "BastetSoftware/backend/database"
+import (
+	"BastetSoftware/backend/database"
+	"github.com/vmihailenco/msgpack/v5"
+)
 
 func HandleFTaskCreate(r []byte) (interface{}, error) {
 	// parse args
@@ -114,4 +117,47 @@ func HandleFTaskGetInfo(r []byte) (interface{}, error) {
 		Gid:         task.Gid,
 		Permissions: task.Permissions,
 	}, nil
+}
+
+func HandleFTaskSearch(r []byte) (interface{}, error) {
+	// parse args
+	var args ArgsFTaskSearch
+	err := msgpack.Unmarshal(r, &args)
+	if err != nil {
+		return Response{Code: EArgsInval}, err
+	}
+
+	_, err = database.VerifySession(Db, []byte(args.Token))
+	switch err {
+	case nil:
+		break
+	case database.ErrNotLoggedIn:
+		return Response{Code: ENotLoggedIn}, nil
+	default:
+		return Response{Code: EUnknown}, err
+	}
+
+	filter := database.TaskFilter{
+		Name:         args.Name,
+		Description:  args.Description,
+		DeadlineFrom: args.DeadlineFrom,
+		DeadlineTo:   args.DeadlineTo,
+		Status:       args.Status,
+		Object:       args.Object,
+		Maintainer:   args.Maintainer,
+		Gid:          args.Gid,
+	}
+	tasks, err := database.FilterTasks(Db, &filter)
+	if err != nil {
+		return Response{Code: EUnknown}, err
+	}
+
+	var resp RespFTaskSearch
+	resp.Code = 0
+	resp.Tasks = make([]database.Task, len(tasks))
+	for i, task := range tasks {
+		resp.Tasks[i] = *task
+	}
+
+	return resp, nil
 }
