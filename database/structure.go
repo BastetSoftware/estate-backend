@@ -145,7 +145,7 @@ func FindStructures(db *sql.DB, filter ArgsFStructFind) ([]StructInfo, error) {
 		}
 	}
 	fmt.Println(query)
-	rows, err := db.Query(query + " LIMIT " + strconv.FormatInt(int64(filter.Limit), 10))
+	rows, err := db.Query(query + " LIMIT " + strconv.FormatInt(int64(filter.Limit), 10) + " OFFSET " + strconv.FormatInt(int64(filter.Offset), 10))
 	if err != nil {
 		return nil, err
 	}
