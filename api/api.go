@@ -204,6 +204,7 @@ type ArgsFStructFind struct {
 }
 
 type RespFStructFind struct {
+	Code       uint8
 	Structures []database.StructInfo
 }
 

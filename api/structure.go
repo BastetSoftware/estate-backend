@@ -124,6 +124,7 @@ func HandleFStructFind(r []byte) (interface{}, error) {
 	}
 
 	return RespFStructFind{
+		Code:       0,
 		Structures: structsInfo,
 	}, nil
 }
