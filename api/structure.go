@@ -35,6 +35,7 @@ func HandleFStructCreate(r []byte) (interface{}, error) {
 		State:       args.State,
 		Area:        args.Area,
 		Owner:       args.Owner,
+		Actual_user: args.Actual_user,
 		Gid:         args.Gid,
 		Permissions: args.Permissions,
 	}
